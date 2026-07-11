@@ -78,6 +78,10 @@ NLA.I18N = {
     statTime: 'Time', statCharms: 'Charms found', statLove: 'Love grown', statMemories: 'Memories',
     locked: 'Locked', unlockedAt: 'charms to unlock', weddingNeed: 'Finish the story to unlock',
     charmsOwned: 'Charms collected', rotate: 'Please rotate your phone to landscape 💛',
+    touchMoveLeft: 'Move left', touchMoveRight: 'Move right', touchJump: 'Jump',
+    touchWind: 'Wind', touchShield: 'Shield', touchLight: 'Light', touchLotus: 'Lotus',
+    touchHands: 'Hold hands', touchSwitch: 'Switch character', touchHeart: 'Send a heart emote',
+    touchGuide: '💗 sends a heart hello — it does not fill Love. Collect both matching heart lanterns together to grow the Love Meter.',
     lvName1: 'Hội An Lantern Street', lvName2: 'Moon River Boat Ride', lvName3: 'Bamboo Bridge Village',
     lvName4: 'Lotus Lake Promise', lvName5: 'Ancient Temple of Lanterns', lvName6: 'The Great Lantern Festival',
     costume_classic: 'Classic Festival Áo Dài', costume_flower: 'Nón Lá Flower', costume_lantern: 'Hội An Lantern',
@@ -117,7 +121,11 @@ NLA.I18N = {
 <h5>🌀 {BOY} (boy)</h5><p>Wind moves lanterns, boats and crates. He can push heavy things, shield the couple, and channel a wind bridge on wind marks.</p>
 <h5>✨ {GIRL} (girl)</h5><p>Light wakes lanterns and opens gates. She heals broken things, grows lotus platforms on sparkling water, and her aura reveals the dark.</p>
 <h5>🏮 Goal</h5><p>Light the key lanterns of each chapter, grow your Love Meter by helping each other, then reach the festival arch together.</p>
-<h5>📱 Phones</h5><p>Touch buttons appear automatically. For two players use “Play Online Together”.</p>`,
+<h5>📱 Phones & touch controls</h5>
+<p><span class="kbd">◀</span><span class="kbd">▶</span> move and <span class="kbd">↑</span> jumps. The two labelled power buttons change for your character: {BOY} taps Wind and holds Shield; {GIRL} taps Light and Lotus.</p>
+<p><span class="kbd">🤝</span> toggles holding hands when you stand close. <span class="kbd">🔄</span> swaps character in solo play. <span class="kbd">💗</span> sends a friendly heart emote only — it does not add Love.</p>
+<p>For two people on phones, use “Play Online Together”.</p>
+<h5>💗 Love icons</h5><p>The heart above the centre lantern is the Love Meter. Help each other, light key lanterns and collect both matching heart lanterns to grow it; every pair gives +5 Love. Its five levels unlock co-op benefits such as safer hand-holding, brighter shared light, a stronger shield and a joint wind jump.</p>`,
     namesTitle: '✏️ Your names',
     intro: [
       'Long ago, in the ancient town of Hội An,\nevery lantern held a tiny warm flame of memory. 🏮',
@@ -173,6 +181,10 @@ NLA.I18N = {
     statTime: 'Thời gian', statCharms: 'Bùa may mắn', statLove: 'Tình yêu lớn thêm', statMemories: 'Ký ức',
     locked: 'Chưa mở', unlockedAt: 'bùa để mở khóa', weddingNeed: 'Hoàn thành cốt truyện để mở',
     charmsOwned: 'Bùa đã thu thập', rotate: 'Hãy xoay ngang điện thoại nhé 💛',
+    touchMoveLeft: 'Đi sang trái', touchMoveRight: 'Đi sang phải', touchJump: 'Nhảy',
+    touchWind: 'Gió', touchShield: 'Khiên', touchLight: 'Ánh sáng', touchLotus: 'Hoa sen',
+    touchHands: 'Nắm tay', touchSwitch: 'Đổi vai', touchHeart: 'Gửi biểu tượng tim',
+    touchGuide: '💗 chỉ gửi lời chào bằng tim — không tăng Tình Yêu. Hãy nhặt đủ một cặp đèn tim cùng nhau để tăng Thang Tình Yêu.',
     lvName1: 'Phố Đèn Lồng Hội An', lvName2: 'Thuyền Trăng Sông Thu Bồn', lvName3: 'Làng Cầu Tre',
     lvName4: 'Lời Hứa Hồ Sen', lvName5: 'Cổ Tự Đèn Lồng', lvName6: 'Đại Lễ Hội Đèn Lồng',
     costume_classic: 'Áo dài lễ hội cổ điển', costume_flower: 'Nón lá cài hoa', costume_lantern: 'Đèn lồng Hội An',
@@ -212,7 +224,11 @@ NLA.I18N = {
 <h5>🌀 {BOY}</h5><p>Gió đẩy đèn lồng, thuyền và thùng gỗ. Chàng đẩy được vật nặng, che khiên cho cả hai, và tạo cầu gió trên dấu gió.</p>
 <h5>✨ {GIRL}</h5><p>Ánh sáng đánh thức đèn lồng và mở cổng. Nàng chữa lành đồ vỡ, mọc bệ hoa sen trên nước lấp lánh, và hào quang soi rõ bóng tối.</p>
 <h5>🏮 Mục tiêu</h5><p>Thắp các đèn lồng chính của mỗi chương, nuôi lớn Thang Tình Yêu bằng cách giúp đỡ nhau, rồi cùng đến cổng lễ hội.</p>
-<h5>📱 Điện thoại</h5><p>Nút cảm ứng tự hiện. Hai người chơi hãy dùng “Chơi Online cùng nhau”.</p>`,
+<h5>📱 Điện thoại & cảm ứng</h5>
+<p><span class="kbd">◀</span><span class="kbd">▶</span> để di chuyển và <span class="kbd">↑</span> để nhảy. Hai nút phép có nhãn sẽ đổi theo nhân vật: {BOY} chạm Gió và GIỮ Khiên; {GIRL} chạm Ánh sáng và Hoa sen.</p>
+<p><span class="kbd">🤝</span> bật/tắt nắm tay khi đứng gần nhau. <span class="kbd">🔄</span> đổi nhân vật khi chơi một mình. <span class="kbd">💗</span> chỉ gửi biểu tượng trái tim thân thiện — không tăng Tình Yêu.</p>
+<p>Hai người chơi trên điện thoại hãy dùng “Chơi Online cùng nhau”.</p>
+<h5>💗 Biểu tượng Tình Yêu</h5><p>Trái tim trên chiếc đèn giữa màn hình là Thang Tình Yêu. Hãy giúp nhau, thắp đèn chính và nhặt đủ hai đèn tim cùng cặp để tăng thang; mỗi cặp được +5 Tình Yêu. Năm cấp sẽ mở lợi ích phối hợp như nắm tay an toàn hơn, ánh sáng chung sáng hơn, khiên mạnh hơn và cú nhảy gió cùng nhau.</p>`,
     namesTitle: '✏️ Tên của hai bạn',
     intro: [
       'Ngày xưa, ở phố cổ Hội An,\nmỗi chiếc đèn lồng giữ một ngọn lửa ký ức nhỏ ấm áp. 🏮',

@@ -5,6 +5,7 @@
    ===================================================================== */
 (function () {
   const keys = {};
+  const touchBindings = [];
   const I = {
     keys,
     touch: { left: false, right: false, jump: false, pow1: false, pow2: false },
@@ -23,8 +24,20 @@
   });
   window.addEventListener('keyup', (e) => { keys[e.code] = false; });
   window.addEventListener('blur', () => { for (const k in keys) keys[k] = false; resetTouch(); });
+  document.addEventListener('visibilitychange', () => { if (document.hidden) resetTouch(); });
 
-  function resetTouch() { const t = I.touch; t.left = t.right = t.jump = t.pow1 = t.pow2 = false; }
+  function resetTouch() {
+    const t = I.touch;
+    t.left = t.right = t.jump = t.pow1 = t.pow2 = false;
+    I.swapPressed = false;
+    I.emotePressed = 0;
+    I.handsPressedTouch = false;
+    for (const binding of touchBindings) {
+      binding.pointers.clear();
+      binding.el.classList.remove('pressed');
+      binding.el.setAttribute('aria-pressed', 'false');
+    }
+  }
 
   /* --- controller readers --- */
   /* P1 = boy on keyboard-left (WASD/E/Q), P2 = girl on arrows (O/P). */
@@ -61,35 +74,86 @@
   I.consumeEmote = function () { const v = I.emotePressed; I.emotePressed = 0; return v; };
   I.consumeHandsTouch = function () { const v = I.handsPressedTouch; I.handsPressedTouch = false; return v; };
 
-  /* --- touch buttons wiring --- */
+  /* --- touch buttons wiring ---
+     Pointer Events support true multi-touch while avoiding the duplicate
+     mouse events that follow older touchstart handlers. */
   I.bindTouchUI = function () {
-    const bind = (id, prop) => {
+    if (I._touchBound) return;
+    I._touchBound = true;
+
+    const capture = (el, pointerId) => {
+      try { el.setPointerCapture(pointerId); } catch (_) { /* capture is optional */ }
+    };
+    const isPrimaryPress = (e) => e.button === undefined || e.button === 0;
+
+    const bindHeld = (id, prop) => {
       const el = document.getElementById(id);
       if (!el) return;
-      const on = (e) => { e.preventDefault(); I.touch[prop] = true; el.classList.add('pressed'); };
-      const off = (e) => { e.preventDefault(); I.touch[prop] = false; el.classList.remove('pressed'); };
-      el.addEventListener('touchstart', on, { passive: false });
-      el.addEventListener('touchend', off, { passive: false });
-      el.addEventListener('touchcancel', off, { passive: false });
-      el.addEventListener('mousedown', on);
-      el.addEventListener('mouseup', off);
-      el.addEventListener('mouseleave', off);
+      const pointers = new Set();
+      const update = () => {
+        const pressed = pointers.size > 0;
+        I.touch[prop] = pressed;
+        el.classList.toggle('pressed', pressed);
+        el.setAttribute('aria-pressed', String(pressed));
+      };
+      const release = (e, prevent) => {
+        if (!pointers.delete(e.pointerId)) return;
+        if (prevent && e.cancelable) e.preventDefault();
+        update();
+      };
+      el.addEventListener('pointerdown', (e) => {
+        if (!isPrimaryPress(e)) return;
+        if (e.cancelable) e.preventDefault();
+        pointers.add(e.pointerId);
+        capture(el, e.pointerId);
+        update();
+      });
+      el.addEventListener('pointerup', (e) => release(e, true));
+      el.addEventListener('pointercancel', (e) => release(e, true));
+      el.addEventListener('lostpointercapture', (e) => release(e, false));
+      touchBindings.push({ el, pointers, release });
     };
-    bind('tc-left-btn', 'left');
-    bind('tc-right-btn', 'right');
-    bind('tc-jump-btn', 'jump');
-    bind('tc-pow1-btn', 'pow1');
-    bind('tc-pow2-btn', 'pow2');
+    bindHeld('tc-left-btn', 'left');
+    bindHeld('tc-right-btn', 'right');
+    bindHeld('tc-jump-btn', 'jump');
+    bindHeld('tc-pow1-btn', 'pow1');
+    bindHeld('tc-pow2-btn', 'pow2');
 
     const tap = (id, fn) => {
       const el = document.getElementById(id);
       if (!el) return;
-      el.addEventListener('touchstart', (e) => { e.preventDefault(); fn(); }, { passive: false });
-      el.addEventListener('mousedown', (e) => { e.preventDefault(); fn(); });
+      const pointers = new Set();
+      const release = (e, prevent) => {
+        if (!pointers.delete(e.pointerId)) return;
+        if (prevent && e.cancelable) e.preventDefault();
+        if (pointers.size === 0) {
+          el.classList.remove('pressed');
+          el.setAttribute('aria-pressed', 'false');
+        }
+      };
+      el.addEventListener('pointerdown', (e) => {
+        if (!isPrimaryPress(e) || pointers.has(e.pointerId)) return;
+        if (e.cancelable) e.preventDefault();
+        pointers.add(e.pointerId);
+        capture(el, e.pointerId);
+        el.classList.add('pressed');
+        el.setAttribute('aria-pressed', 'true');
+        fn();
+      });
+      el.addEventListener('pointerup', (e) => release(e, true));
+      el.addEventListener('pointercancel', (e) => release(e, true));
+      el.addEventListener('lostpointercapture', (e) => release(e, false));
+      touchBindings.push({ el, pointers, release });
     };
     tap('tc-switch-btn', () => { I.swapPressed = true; });
     tap('tc-hands-btn', () => { I.handsPressedTouch = true; });
-    tap('tc-emote-btn', () => { I.emotePressed = (I.emotePressed % 3) + 1; });
+    tap('tc-emote-btn', () => { I.emotePressed = 1; });
+
+    const releaseLostPointer = (e) => {
+      for (const binding of touchBindings) binding.release(e, false);
+    };
+    window.addEventListener('pointerup', releaseLostPointer);
+    window.addEventListener('pointercancel', releaseLostPointer);
   };
 
   NLA.input = I;

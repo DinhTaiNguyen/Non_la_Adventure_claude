@@ -18,7 +18,7 @@
   class Game {
     constructor(canvas) {
       this.canvas = canvas;
-      this.ctx = canvas.getContext('2d');
+      this.ctx = canvas.getContext('2d', { alpha: false });
       this.state = 'idle';        /* idle | play | memory | complete | ending */
       this.paused = false;
       this.mode = 'solo';         /* solo | local | net */
@@ -32,6 +32,16 @@
       this.charmsRun = 0;
       this.net = NLA.net;
       this.lightCanvas = document.createElement('canvas');
+      this.lightCtx = this.lightCanvas.getContext('2d');
+      this.lightScale = NLA.input.isTouchDevice ? 0.42 : 0.5;
+      this.lightHole = document.createElement('canvas');
+      this.lightHole.width = this.lightHole.height = 128;
+      const holeCtx = this.lightHole.getContext('2d');
+      const holeGrad = holeCtx.createRadialGradient(64, 64, 10, 64, 64, 64);
+      holeGrad.addColorStop(0, 'rgba(0,0,0,1)');
+      holeGrad.addColorStop(1, 'rgba(0,0,0,0)');
+      holeCtx.fillStyle = holeGrad;
+      holeCtx.fillRect(0, 0, 128, 128);
       this._suppress = false;
       this.prevHands = false;
       this.tip = null;
@@ -531,7 +541,8 @@
       this.updateWaves(dt);
 
       /* build dynamic solids */
-      this.solids = this.staticSolids.slice();
+      this.solids.length = 0;
+      for (const solid of this.staticSolids) this.solids.push(solid);
       for (const o of this.objects) {
         if (o.solid) {
           const s = o.solid(this);
@@ -932,8 +943,8 @@
       this.scale = h / C.VIEW_H;
       this.viewW = w / this.scale;
       this.viewH = C.VIEW_H;
-      this.lightCanvas.width = Math.ceil(w / 2);
-      this.lightCanvas.height = Math.ceil(h / 2);
+      this.lightCanvas.width = Math.ceil(w * this.lightScale);
+      this.lightCanvas.height = Math.ceil(h * this.lightScale);
     }
 
     draw() {
@@ -947,6 +958,14 @@
       const lv = this.level;
       const camX = this.cam.x, camY = this.cam.y;
       const t = this.t;
+      const drawLeft = camX - 220, drawRight = camX + this.viewW + 220;
+      const inDrawRange = (item) => {
+        if (item instanceof E.BirdZone && item.birds.some(b => b.x >= drawLeft && b.x <= drawRight)) return true;
+        const x0 = item.x1 !== undefined ? item.x1 : (item.x !== undefined ? item.x : item.pos);
+        if (x0 === undefined) return true;
+        const x1 = item.x2 !== undefined ? item.x2 : x0 + (item.w || 0);
+        return x1 >= drawLeft && x0 <= drawRight;
+      };
 
       /* background */
       NLA.bg.draw(ctx, camX, camY, this.viewW, this.viewH, t, { groundY: lv.groundY });
@@ -955,24 +974,28 @@
       ctx.translate(-camX, -camY);
 
       /* water */
-      for (const w of lv.water) this.drawWater(ctx, w, t);
+      for (const w of lv.water) {
+        if (w.x + w.w >= drawLeft && w.x <= drawRight) this.drawWater(ctx, w, t, drawLeft, drawRight);
+      }
 
       /* exit arch (behind) */
-      if (lv.exit) this.drawExit(ctx, lv.exit.x, lv.groundY, t);
+      if (lv.exit && lv.exit.x + 120 >= drawLeft && lv.exit.x - 120 <= drawRight) this.drawExit(ctx, lv.exit.x, lv.groundY, t);
 
       /* platforms */
-      for (const p of lv.platforms) this.drawPlatform(ctx, p, t);
+      for (const p of lv.platforms) {
+        if (p.x + p.w >= drawLeft && p.x <= drawRight) this.drawPlatform(ctx, p, t);
+      }
 
       /* objects */
-      for (const o of this.objects) o.draw && o.draw(ctx, t, this);
-      for (const c of this.collectibles) c.draw(ctx, t);
+      for (const o of this.objects) if (inDrawRange(o)) o.draw && o.draw(ctx, t, this);
+      for (const c of this.collectibles) if (inDrawRange(c)) c.draw(ctx, t);
 
       /* players + hand link */
       if (this.holdingHands) NLA.chars.drawHandLink(ctx, this.players[0], this.players[1], t);
       for (const pl of this.players) pl.draw(ctx, t, this);
 
       /* enemies above players */
-      for (const e of this.enemies) e.draw(ctx, t);
+      for (const e of this.enemies) if (inDrawRange(e)) e.draw(ctx, t);
 
       /* world particles */
       P().draw(ctx, 0, 0, 0);
@@ -1009,33 +1032,42 @@
       NLA.chars.drawPreview(ctx, 'girl', NLA.costumeFor('girl'), cx + 55, this.viewH - 60, 1.25, this.t + 0.4);
     }
 
-    drawWater(ctx, w, t) {
+    drawWater(ctx, w, t, viewLeft, viewRight) {
       const surface = w.y;
       const bottom = this.level.H;
+      const left = Math.max(w.x, viewLeft === undefined ? w.x : viewLeft);
+      const right = Math.min(w.x + w.w, viewRight === undefined ? w.x + w.w : viewRight);
+      if (right <= left) return;
       const grad = ctx.createLinearGradient(0, surface, 0, bottom);
       const th = this.level.theme;
       const cols = th === 'lake' ? ['#2c2158', '#161033'] : ['#1d3b5e', '#0c1c33'];
       grad.addColorStop(0, cols[0]);
       grad.addColorStop(1, cols[1]);
       ctx.fillStyle = grad;
-      ctx.fillRect(w.x, surface, w.w, bottom - surface);
+      ctx.fillRect(left, surface, right - left, bottom - surface);
       /* surface line */
       ctx.strokeStyle = 'rgba(180,220,255,0.5)';
       ctx.lineWidth = 2;
       ctx.beginPath();
-      for (let x = w.x; x <= w.x + w.w; x += 24) {
+      const lineStart = Math.floor(left / 24) * 24;
+      for (let x = lineStart; x <= right + 24; x += 24) {
         const y = surface + Math.sin(x * 0.05 + t * 2) * 2;
-        x === w.x ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+        x === lineStart ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
       }
       ctx.stroke();
       /* shimmer streaks */
       ctx.save();
       ctx.globalAlpha = 0.16;
       ctx.fillStyle = '#cfe8ff';
-      for (let i = 0; i < w.w / 130; i++) {
-        const sx = w.x + ((i * 137 + t * 26) % w.w);
-        const sy = surface + 18 + (i % 4) * 22;
-        ctx.fillRect(sx, sy, 34 + (i % 3) * 18, 2);
+      const shimmerStep = 137;
+      const shimmerOffset = (t * 26) % shimmerStep;
+      const firstShimmer = Math.floor((left - w.x - shimmerOffset) / shimmerStep) - 1;
+      const lastShimmer = Math.ceil((right - w.x - shimmerOffset) / shimmerStep) + 1;
+      for (let i = firstShimmer; i <= lastShimmer; i++) {
+        const sx = w.x + i * shimmerStep + shimmerOffset;
+        if (sx < w.x || sx > w.x + w.w) continue;
+        const mod = ((i % 4) + 4) % 4;
+        ctx.fillRect(sx, surface + 18 + mod * 22, 34 + (mod % 3) * 18, 2);
       }
       /* moon glint */
       ctx.globalAlpha = 0.12;
@@ -1152,9 +1184,11 @@
         return;
       }
       const lc = this.lightCanvas;
-      const g = lc.getContext('2d');
+      const g = this.lightCtx;
       const s = lc.width / this.viewW; /* light canvas scale */
       g.setTransform(1, 0, 0, 1, 0, 0);
+      g.globalCompositeOperation = 'source-over';
+      g.globalAlpha = 1;
       g.clearRect(0, 0, lc.width, lc.height);
       const endBright = this.state === 'ending' ? Math.min(1, this.endingT / 2) : 0;
       const darkA = lv.dark ? 0.82 * (1 - endBright) : 0.75;
@@ -1183,11 +1217,8 @@
       const hole = (wx, wy, r, a) => {
         const x = (wx - camX) * s, y = (wy - camY) * s, rr = r * s;
         if (x < -rr || x > lc.width + rr) return;
-        const grad = g.createRadialGradient(x, y, rr * 0.15, x, y, rr);
-        grad.addColorStop(0, `rgba(0,0,0,${a === undefined ? 1 : a})`);
-        grad.addColorStop(1, 'rgba(0,0,0,0)');
-        g.fillStyle = grad;
-        g.beginPath(); g.arc(x, y, rr, 0, 6.283); g.fill();
+        g.globalAlpha = a === undefined ? 1 : a;
+        g.drawImage(this.lightHole, x - rr, y - rr, rr * 2, rr * 2);
       };
       /* girl aura */
       const auraR = 150 + this.loveLevel * 34 + Math.sin(t * 2.4) * 6;
@@ -1206,6 +1237,8 @@
       for (const pt of P().list) {
         if (pt.kind === 'firefly') hole(pt.x, pt.y, 34, 0.5);
       }
+      g.globalAlpha = 1;
+      g.globalCompositeOperation = 'source-over';
       ctx.drawImage(lc, 0, 0, lc.width, lc.height, 0, 0, this.viewW, this.viewH);
     }
 

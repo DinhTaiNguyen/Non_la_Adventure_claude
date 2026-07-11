@@ -203,7 +203,8 @@
   };
 
   /* ===================== particles ===================== */
-  const P = { list: [], max: 420 };
+  const isCoarsePointer = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+  const P = { list: [], max: isCoarsePointer ? 240 : 420 };
   D.particles = P;
 
   P.spawn = function (opt) {

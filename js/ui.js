@@ -15,8 +15,14 @@
   };
 
   /* ---------------- helpers ---------------- */
-  function show(id) { $(id).classList.remove('hidden'); }
-  function hide(id) { $(id).classList.add('hidden'); }
+  function show(id) {
+    $(id).classList.remove('hidden');
+    if (UI.refreshPreviews) UI.refreshPreviews();
+  }
+  function hide(id) {
+    $(id).classList.add('hidden');
+    if (UI.refreshPreviews) UI.refreshPreviews();
+  }
   function hideAllPanels() {
     ['menu', 'pick-panel', 'level-panel', 'online-panel', 'wardrobe-panel', 'help-panel',
       'story', 'memory', 'complete', 'pause-panel'].forEach(hide);
@@ -30,6 +36,18 @@
     UI._toastT = setTimeout(() => t.classList.remove('show'), ms || 3200);
   };
 
+  UI.showTouchGuide = function () {
+    const guide = $('touch-guide');
+    if (!NLA.input.isTouchDevice || game.mode === 'local' || game.state !== 'play') {
+      hide('touch-guide');
+      return;
+    }
+    $('touch-guide-text').textContent = NLA.t('touchGuide');
+    clearTimeout(UI._touchGuideT);
+    show('touch-guide');
+    UI._touchGuideT = setTimeout(() => hide('touch-guide'), 5600);
+  };
+
   /* ---------------- i18n ---------------- */
   UI.applyLang = function () {
     document.querySelectorAll('[data-i18n]').forEach(el => {
@@ -38,6 +56,7 @@
     $('help-content').innerHTML = NLA.t('helpKeys');
     buildNameEditors();
     updateNameLabels();
+    UI.updateTouchIcons();
   };
 
   /* ---------------- player names (default Joku & Jolie) ---------------- */
@@ -183,6 +202,7 @@
   UI.pause = function () {
     if (game.state !== 'play') return;
     game.paused = true;
+    hide('touch-guide');
     show('pause-panel');
     /* net: pausing only pauses locally; hide restart for guest */
     $('btn-restart').style.display = (NLA.net.active && !NLA.net.isHost) ? 'none' : '';
@@ -200,7 +220,7 @@
     NLA.draw.particles.clear();
     NLA.audio.setTheme('menu');
     NLA.audio.setIntensity(0.3);
-    hide('topbar'); hide('touch-ui');
+    hide('topbar'); hide('touch-ui'); hide('touch-guide');
     show('menu');
     game._menuBuilt = false;
   };
@@ -236,14 +256,20 @@
     hideAllPanels();
     NLA.audio.unlock();
     show('topbar');
-    if (NLA.input.isTouchDevice) { show('touch-ui'); UI.updateTouchIcons(); }
+    if (NLA.input.isTouchDevice && game.mode !== 'local') {
+      show('touch-ui');
+      UI.updateTouchIcons();
+    } else hide('touch-ui');
     const lv = NLA.LEVELS[idx];
     const slides = [];
     if (idx === 0 && (withIntro || fromNet)) slides.push(...NLA.t('intro'));
     slides.push(NLA.t(lv.introKey));
     game.loadLevel(idx);
     game.paused = true;
-    showStory(slides, () => { game.paused = false; });
+    showStory(slides, () => {
+      game.paused = false;
+      UI.showTouchGuide();
+    });
   };
 
   function showStory(slides, done) {
@@ -424,8 +450,22 @@
     let who = 'boy';
     if (game.mode === 'net') who = NLA.net.myChar;
     else if (game.mode === 'solo') who = game.activeChar;
-    $('tc-pow1-ico').textContent = who === 'boy' ? '🌀' : '✨';
-    $('tc-pow2-ico').textContent = who === 'boy' ? '🛡' : '🌸';
+    const isBoy = who === 'boy';
+    const pow1 = isBoy ? { icon: '🌀', label: NLA.t('touchWind') } : { icon: '✨', label: NLA.t('touchLight') };
+    const pow2 = isBoy ? { icon: '🛡', label: NLA.t('touchShield') } : { icon: '🌸', label: NLA.t('touchLotus') };
+    $('tc-pow1-ico').textContent = pow1.icon;
+    $('tc-pow2-ico').textContent = pow2.icon;
+    $('tc-pow1-copy').textContent = pow1.label;
+    $('tc-pow2-copy').textContent = pow2.label;
+    $('tc-jump-copy').textContent = NLA.t('touchJump');
+    $('tc-left-btn').setAttribute('aria-label', NLA.t('touchMoveLeft'));
+    $('tc-right-btn').setAttribute('aria-label', NLA.t('touchMoveRight'));
+    $('tc-jump-btn').setAttribute('aria-label', NLA.t('touchJump'));
+    $('tc-pow1-btn').setAttribute('aria-label', pow1.label);
+    $('tc-pow2-btn').setAttribute('aria-label', pow2.label);
+    $('tc-hands-btn').setAttribute('aria-label', NLA.t('touchHands'));
+    $('tc-switch-btn').setAttribute('aria-label', NLA.t('touchSwitch'));
+    $('tc-emote-btn').setAttribute('aria-label', NLA.t('touchHeart'));
     $('tc-switch-btn').style.display = game.mode === 'solo' ? '' : 'none';
   };
 
@@ -436,27 +476,48 @@
       { id: 'pick-canvas-girl', who: 'girl', s: 1.5 },
       { id: 'online-canvas-boy', who: 'boy', s: 1.15 },
       { id: 'online-canvas-girl', who: 'girl', s: 1.15 },
-    ];
-    function frame(ts) {
-      const t = ts / 1000;
+    ].map(cv => {
+      const el = $(cv.id);
+      return Object.assign(cv, { el, ctx: el && el.getContext('2d') });
+    });
+    const wardrobeCanvas = $('wardrobe-canvas');
+    const wardrobeCtx = wardrobeCanvas && wardrobeCanvas.getContext('2d');
+    let previewFrame = 0, lastPreview = -Infinity;
+
+    const hasVisiblePreview = () =>
+      canvases.some(cv => cv.el && cv.el.offsetParent !== null) ||
+      (wardrobeCanvas && wardrobeCanvas.offsetParent !== null);
+
+    const render = (t) => {
       for (const cv of canvases) {
-        const el = $(cv.id);
-        if (!el || el.offsetParent === null) continue;
-        const ctx = el.getContext('2d');
-        ctx.clearRect(0, 0, el.width, el.height);
-        NLA.chars.drawPreview(ctx, cv.who, NLA.costumeFor(cv.who), el.width / 2, el.height - 18, cv.s, t);
+        if (!cv.el || cv.el.offsetParent === null) continue;
+        cv.ctx.clearRect(0, 0, cv.el.width, cv.el.height);
+        NLA.chars.drawPreview(cv.ctx, cv.who, NLA.costumeFor(cv.who), cv.el.width / 2, cv.el.height - 18, cv.s, t);
       }
-      /* wardrobe preview: the couple side by side */
-      const wc = $('wardrobe-canvas');
-      if (wc && wc.offsetParent !== null) {
-        const ctx = wc.getContext('2d');
-        ctx.clearRect(0, 0, wc.width, wc.height);
-        NLA.chars.drawPreview(ctx, 'boy', NLA.costumeFor('boy'), wc.width / 2 - 55, wc.height - 22, 1.55, t);
-        NLA.chars.drawPreview(ctx, 'girl', NLA.costumeFor('girl'), wc.width / 2 + 55, wc.height - 22, 1.55, t + 0.5);
+      if (wardrobeCanvas && wardrobeCanvas.offsetParent !== null) {
+        wardrobeCtx.clearRect(0, 0, wardrobeCanvas.width, wardrobeCanvas.height);
+        NLA.chars.drawPreview(wardrobeCtx, 'boy', NLA.costumeFor('boy'), wardrobeCanvas.width / 2 - 55, wardrobeCanvas.height - 22, 1.55, t);
+        NLA.chars.drawPreview(wardrobeCtx, 'girl', NLA.costumeFor('girl'), wardrobeCanvas.width / 2 + 55, wardrobeCanvas.height - 22, 1.55, t + 0.5);
       }
-      requestAnimationFrame(frame);
+    };
+
+    function frame(ts) {
+      if (!hasVisiblePreview()) {
+        previewFrame = 0;
+        return;
+      }
+      if (ts - lastPreview >= 1000 / 30) {
+        render(ts / 1000);
+        lastPreview = ts;
+      }
+      previewFrame = requestAnimationFrame(frame);
     }
-    requestAnimationFrame(frame);
+    UI.refreshPreviews = function () {
+      if (previewFrame || !hasVisiblePreview()) return;
+      lastPreview = -Infinity;
+      previewFrame = requestAnimationFrame(frame);
+    };
+    UI.refreshPreviews();
   }
 
   NLA.ui = UI;

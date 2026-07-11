@@ -10,28 +10,37 @@
 <title>Nón Lá Love Adventure: Lanterns of Hội An</title>
 <meta name="description" content="A cozy romantic co-op adventure through a magical Hội An lantern festival. Play together, restore the light!">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏮</text></svg>">
-<link rel="stylesheet" href="css/style.css?v=2">
+<link rel="stylesheet" href="css/style.css?v=3">
 </head>
 <body>
 <div id="app">
   <canvas id="game"></canvas>
 
   <!-- ===== Touch controls (shown only on touch devices, in game) ===== -->
-  <div id="touch-ui" class="hidden">
-    <div id="tc-left">
-      <button class="tc-btn tc-dir" id="tc-left-btn" aria-label="left">◀</button>
-      <button class="tc-btn tc-dir" id="tc-right-btn" aria-label="right">▶</button>
+  <div id="touch-ui" class="hidden" aria-label="Game touch controls">
+    <div id="tc-left" role="group" aria-label="Movement controls">
+      <button type="button" class="tc-btn tc-dir" id="tc-left-btn" aria-label="Move left">◀</button>
+      <button type="button" class="tc-btn tc-dir" id="tc-right-btn" aria-label="Move right">▶</button>
     </div>
-    <div id="tc-right">
-      <button class="tc-btn tc-act" id="tc-pow2-btn"><span class="tc-ico" id="tc-pow2-ico">🛡</span></button>
-      <button class="tc-btn tc-act" id="tc-pow1-btn"><span class="tc-ico" id="tc-pow1-ico">🌀</span></button>
-      <button class="tc-btn tc-act tc-jump" id="tc-jump-btn"><span class="tc-ico">⬆</span></button>
+    <div id="tc-right" role="group" aria-label="Action controls">
+      <button type="button" class="tc-btn tc-act" id="tc-pow2-btn" aria-label="Shield">
+        <span class="tc-ico" id="tc-pow2-ico">🛡</span><span class="tc-btn-copy" id="tc-pow2-copy">Shield</span>
+      </button>
+      <button type="button" class="tc-btn tc-act" id="tc-pow1-btn" aria-label="Wind">
+        <span class="tc-ico" id="tc-pow1-ico">🌀</span><span class="tc-btn-copy" id="tc-pow1-copy">Wind</span>
+      </button>
+      <button type="button" class="tc-btn tc-act tc-jump" id="tc-jump-btn" aria-label="Jump">
+        <span class="tc-ico">⬆</span><span class="tc-btn-copy" id="tc-jump-copy">Jump</span>
+      </button>
     </div>
-    <div id="tc-mid">
-      <button class="tc-btn tc-small" id="tc-hands-btn">🤝</button>
-      <button class="tc-btn tc-small" id="tc-switch-btn">🔄</button>
-      <button class="tc-btn tc-small" id="tc-emote-btn">💗</button>
+    <div id="tc-mid" role="group" aria-label="Together controls">
+      <button type="button" class="tc-btn tc-small" id="tc-hands-btn" aria-label="Hold hands">🤝</button>
+      <button type="button" class="tc-btn tc-small" id="tc-switch-btn" aria-label="Switch character">🔄</button>
+      <button type="button" class="tc-btn tc-small" id="tc-emote-btn" aria-label="Send a heart emote">💗</button>
     </div>
+  </div>
+  <div id="touch-guide" class="hidden" role="status" aria-live="polite">
+    <span class="touch-guide-icon">💗</span><span id="touch-guide-text"></span>
   </div>
 
   <!-- top bar (pause) -->
@@ -214,17 +223,17 @@
 </div>
 
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js" defer></script>
-<script src="js/config.js?v=2"></script>
-<script src="js/draw.js?v=2"></script>
+<script src="js/config.js?v=3"></script>
+<script src="js/draw.js?v=3"></script>
 <script src="js/audio.js?v=2"></script>
-<script src="js/input.js?v=2"></script>
+<script src="js/input.js?v=3"></script>
 <script src="js/levels.js?v=2"></script>
 <script src="js/chars.js?v=2"></script>
 <script src="js/bg.js?v=2"></script>
 <script src="js/entities.js?v=2"></script>
 <script src="js/net.js?v=2"></script>
-<script src="js/game.js?v=2"></script>
-<script src="js/ui.js?v=2"></script>
-<script src="js/main.js?v=2"></script>
+<script src="js/game.js?v=3"></script>
+<script src="js/ui.js?v=3"></script>
+<script src="js/main.js?v=3"></script>
 </body>
 </html>
