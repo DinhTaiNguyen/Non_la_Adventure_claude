@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#1a0e2e">
+<title>Nón Lá Love Adventure: Lanterns of Hội An</title>
+<meta name="description" content="A cozy romantic co-op adventure through a magical Hội An lantern festival. Play together, restore the light!">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏮</text></svg>">
+<link rel="stylesheet" href="css/style.css?v=2">
+</head>
+<body>
+<div id="app">
+  <canvas id="game"></canvas>
+
+  <!-- ===== Touch controls (shown only on touch devices, in game) ===== -->
+  <div id="touch-ui" class="hidden">
+    <div id="tc-left">
+      <button class="tc-btn tc-dir" id="tc-left-btn" aria-label="left">◀</button>
+      <button class="tc-btn tc-dir" id="tc-right-btn" aria-label="right">▶</button>
+    </div>
+    <div id="tc-right">
+      <button class="tc-btn tc-act" id="tc-pow2-btn"><span class="tc-ico" id="tc-pow2-ico">🛡</span></button>
+      <button class="tc-btn tc-act" id="tc-pow1-btn"><span class="tc-ico" id="tc-pow1-ico">🌀</span></button>
+      <button class="tc-btn tc-act tc-jump" id="tc-jump-btn"><span class="tc-ico">⬆</span></button>
+    </div>
+    <div id="tc-mid">
+      <button class="tc-btn tc-small" id="tc-hands-btn">🤝</button>
+      <button class="tc-btn tc-small" id="tc-switch-btn">🔄</button>
+      <button class="tc-btn tc-small" id="tc-emote-btn">💗</button>
+    </div>
+  </div>
+
+  <!-- top bar (pause) -->
+  <div id="topbar" class="hidden">
+    <button id="btn-pause" class="icon-btn" aria-label="pause">⏸</button>
+  </div>
+
+  <!-- ===== Main menu ===== -->
+  <div id="menu" class="overlay">
+    <div class="menu-card">
+      <div class="title-wrap">
+        <div class="title-lanterns"><span>🏮</span><span>🏮</span><span>🏮</span></div>
+        <h1 id="game-title">Nón Lá Love Adventure</h1>
+        <h2 id="game-subtitle">Lanterns of Hội An</h2>
+      </div>
+      <div class="menu-buttons">
+        <button class="btn btn-primary" id="btn-solo" data-i18n="playSolo">Play Solo</button>
+        <button class="btn" id="btn-local" data-i18n="local2p">2 Players (One Keyboard)</button>
+        <button class="btn btn-online" id="btn-online" data-i18n="online">Play Online Together 💞</button>
+        <div class="menu-row">
+          <button class="btn btn-half" id="btn-wardrobe" data-i18n="wardrobe">Wardrobe</button>
+          <button class="btn btn-half" id="btn-help" data-i18n="howto">How to Play</button>
+        </div>
+        <div class="menu-row settings-row">
+          <button class="btn btn-third" id="btn-lang">EN / VI</button>
+          <button class="btn btn-third" id="btn-music">🎵 On</button>
+          <button class="btn btn-third" id="btn-sfx">🔔 On</button>
+        </div>
+      </div>
+      <p class="menu-foot" id="menu-foot" data-i18n="menuFoot">A cozy Vietnamese fairytale about love & light ✨</p>
+    </div>
+  </div>
+
+  <!-- ===== Character pick (solo) ===== -->
+  <div id="pick-panel" class="overlay hidden">
+    <div class="panel-card">
+      <h3 data-i18n="pickChar">Choose your character</h3>
+      <div class="pick-row">
+        <button class="pick-card" id="pick-boy">
+          <canvas class="pick-canvas" id="pick-canvas-boy" width="140" height="170"></canvas>
+          <span class="name-boy">Joku</span>
+          <small data-i18n="boyDesc">Wind & Shield</small>
+        </button>
+        <button class="pick-card" id="pick-girl">
+          <canvas class="pick-canvas" id="pick-canvas-girl" width="140" height="170"></canvas>
+          <span class="name-girl">Jolie</span>
+          <small data-i18n="girlDesc">Light & Lotus</small>
+        </button>
+      </div>
+      <div class="name-edit" data-names></div>
+      <p class="hint" data-i18n="soloHint">Your partner follows you — press Tab / 🔄 to swap anytime.</p>
+      <button class="btn btn-ghost" id="pick-back" data-i18n="back">Back</button>
+    </div>
+  </div>
+
+  <!-- ===== Level select ===== -->
+  <div id="level-panel" class="overlay hidden">
+    <div class="panel-card">
+      <h3 data-i18n="chooseLevel">Choose a chapter</h3>
+      <div id="level-list" class="level-list"></div>
+      <button class="btn btn-ghost" id="level-back" data-i18n="back">Back</button>
+    </div>
+  </div>
+
+  <!-- ===== Online panel ===== -->
+  <div id="online-panel" class="overlay hidden">
+    <div class="panel-card">
+      <h3 data-i18n="onlineTitle">Play Together Online</h3>
+      <p class="hint" data-i18n="onlineHint">One of you hosts, the other joins with the room code. Works on phones & computers!</p>
+      <div id="online-choose">
+        <div class="pick-row">
+          <button class="pick-card small" id="online-pick-boy">
+            <canvas class="pick-canvas" id="online-canvas-boy" width="110" height="130"></canvas>
+            <span class="name-boy">Joku</span>
+          </button>
+          <button class="pick-card small" id="online-pick-girl">
+            <canvas class="pick-canvas" id="online-canvas-girl" width="110" height="130"></canvas>
+            <span class="name-girl">Jolie</span>
+          </button>
+        </div>
+        <div class="name-edit" data-names></div>
+        <p class="hint" data-i18n="onlinePickHint">Pick who YOU want to play — your partner gets the other.</p>
+        <button class="btn btn-primary" id="btn-host" data-i18n="hostGame">Create a room 💌</button>
+        <div class="join-row">
+          <input id="join-code" maxlength="4" placeholder="CODE" autocomplete="off" autocapitalize="characters">
+          <button class="btn" id="btn-join" data-i18n="joinGame">Join</button>
+        </div>
+      </div>
+      <div id="online-status" class="hidden">
+        <p id="online-msg">…</p>
+        <div id="room-code-box" class="hidden">
+          <p data-i18n="shareCode">Share this code with your love:</p>
+          <div id="room-code">— — — —</div>
+        </div>
+        <div class="conn-hearts"><span>💗</span><span>💗</span><span>💗</span></div>
+      </div>
+      <button class="btn btn-ghost" id="online-back" data-i18n="back">Back</button>
+    </div>
+  </div>
+
+  <!-- ===== Wardrobe ===== -->
+  <div id="wardrobe-panel" class="overlay hidden">
+    <div class="panel-card wide">
+      <h3 data-i18n="wardrobe">Wardrobe</h3>
+      <p class="hint"><span data-i18n="charmsOwned">Charms collected</span>: <b id="wardrobe-charms">0</b> 🏮</p>
+      <div class="wardrobe-preview">
+        <canvas id="wardrobe-canvas" width="320" height="200"></canvas>
+      </div>
+      <div class="name-edit" data-names></div>
+      <div id="costume-list" class="costume-list"></div>
+      <button class="btn btn-ghost" id="wardrobe-back" data-i18n="back">Back</button>
+    </div>
+  </div>
+
+  <!-- ===== How to play ===== -->
+  <div id="help-panel" class="overlay hidden">
+    <div class="panel-card wide">
+      <h3 data-i18n="howto">How to Play</h3>
+      <div id="help-content" class="help-content"></div>
+      <button class="btn btn-ghost" id="help-back" data-i18n="back">Back</button>
+    </div>
+  </div>
+
+  <!-- ===== Cutscene / story overlay ===== -->
+  <div id="story" class="overlay story hidden">
+    <div class="story-inner">
+      <p id="story-text"></p>
+      <button class="btn btn-primary" id="story-next" data-i18n="continue">Continue ➜</button>
+    </div>
+  </div>
+
+  <!-- ===== Memory scene ===== -->
+  <div id="memory" class="overlay memory hidden">
+    <div class="memory-card">
+      <div class="memory-lantern">🏮</div>
+      <h4 data-i18n="memoryTitle">A warm memory returns…</h4>
+      <p id="memory-text"></p>
+      <button class="btn btn-primary" id="memory-close" data-i18n="keepGoing">Keep it in our hearts 💗</button>
+    </div>
+  </div>
+
+  <!-- ===== Level complete ===== -->
+  <div id="complete" class="overlay hidden">
+    <div class="panel-card">
+      <h3 data-i18n="levelClear">Chapter complete! 🎆</h3>
+      <div id="complete-stats" class="complete-stats"></div>
+      <div class="menu-buttons">
+        <button class="btn btn-primary" id="btn-next-level" data-i18n="nextChapter">Next chapter ➜</button>
+        <button class="btn btn-ghost" id="btn-complete-menu" data-i18n="backToMenu">Back to menu</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Pause ===== -->
+  <div id="pause-panel" class="overlay hidden">
+    <div class="panel-card">
+      <h3 data-i18n="paused">Paused 🌙</h3>
+      <div class="menu-buttons">
+        <button class="btn btn-primary" id="btn-resume" data-i18n="resume">Resume</button>
+        <button class="btn" id="btn-restart" data-i18n="restart">Restart chapter</button>
+        <div class="menu-row settings-row">
+          <button class="btn btn-third" id="pause-lang">EN / VI</button>
+          <button class="btn btn-third" id="pause-music">🎵 On</button>
+          <button class="btn btn-third" id="pause-sfx">🔔 On</button>
+        </div>
+        <button class="btn btn-ghost" id="btn-quit" data-i18n="backToMenu">Back to menu</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- rotate hint -->
+  <div id="rotate-hint" class="overlay hidden">
+    <div class="rotate-inner">
+      <div class="rotate-phone">📱↻</div>
+      <p data-i18n="rotate">Please rotate your phone to landscape 💛</p>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+</div>
+
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js" defer></script>
+<script src="js/config.js?v=2"></script>
+<script src="js/draw.js?v=2"></script>
+<script src="js/audio.js?v=2"></script>
+<script src="js/input.js?v=2"></script>
+<script src="js/levels.js?v=2"></script>
+<script src="js/chars.js?v=2"></script>
+<script src="js/bg.js?v=2"></script>
+<script src="js/entities.js?v=2"></script>
+<script src="js/net.js?v=2"></script>
+<script src="js/game.js?v=2"></script>
+<script src="js/ui.js?v=2"></script>
+<script src="js/main.js?v=2"></script>
+</body>
+</html>

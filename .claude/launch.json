@@ -1,0 +1,14 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "game",
+      "runtimeExecutable": "py",
+      "runtimeArgs": [
+        "C:\\Users\\Admin\\AppData\\Local\\Temp\\claude\\C--Users-Admin-Downloads-Claude-code-Non-la-Adventure-claude\\4eae6f41-c484-4252-811d-cbf7bc1e0087\\scratchpad\\serve.py",
+        "C:\\Users\\Admin\\Downloads\\Claude_code\\Non_la_Adventure_claude"
+      ],
+      "port": 8873
+    }
+  ]
+}

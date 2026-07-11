@@ -1,0 +1,463 @@
+/* =====================================================================
+   ui.js — DOM menus, dialogs, overlays, touch UI, i18n binding.
+   ===================================================================== */
+(function () {
+  const $ = (id) => document.getElementById(id);
+  const UI = {};
+  let game = null;
+
+  UI.init = function (g) {
+    game = g;
+    bindMenus();
+    UI.applyLang();
+    UI.updateToggles();
+    startPreviewLoops();
+  };
+
+  /* ---------------- helpers ---------------- */
+  function show(id) { $(id).classList.remove('hidden'); }
+  function hide(id) { $(id).classList.add('hidden'); }
+  function hideAllPanels() {
+    ['menu', 'pick-panel', 'level-panel', 'online-panel', 'wardrobe-panel', 'help-panel',
+      'story', 'memory', 'complete', 'pause-panel'].forEach(hide);
+  }
+
+  UI.toast = function (msg, ms) {
+    const t = $('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(UI._toastT);
+    UI._toastT = setTimeout(() => t.classList.remove('show'), ms || 3200);
+  };
+
+  /* ---------------- i18n ---------------- */
+  UI.applyLang = function () {
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      el.innerHTML = NLA.t(el.getAttribute('data-i18n'));
+    });
+    $('help-content').innerHTML = NLA.t('helpKeys');
+    buildNameEditors();
+    updateNameLabels();
+  };
+
+  /* ---------------- player names (default Joku & Jolie) ---------------- */
+  function updateNameLabels() {
+    document.querySelectorAll('.name-boy').forEach(el => { el.textContent = NLA.name('boy'); });
+    document.querySelectorAll('.name-girl').forEach(el => { el.textContent = NLA.name('girl'); });
+  }
+  function syncNameInputs(except) {
+    document.querySelectorAll('.ne-boy').forEach(i => { if (i !== except) i.value = NLA.save.data.nameBoy; });
+    document.querySelectorAll('.ne-girl').forEach(i => { if (i !== except) i.value = NLA.save.data.nameGirl; });
+  }
+  function buildNameEditors() {
+    document.querySelectorAll('[data-names]').forEach(box => {
+      box.innerHTML = `<div class="ne-title">${NLA.t('namesTitle')}</div>
+        <label class="ne-field"><span class="ne-ico">💙</span><input class="ne-boy" maxlength="12" autocomplete="off"></label>
+        <label class="ne-field"><span class="ne-ico">💗</span><input class="ne-girl" maxlength="12" autocomplete="off"></label>`;
+    });
+    syncNameInputs();
+    document.querySelectorAll('.ne-boy, .ne-girl').forEach(inp => {
+      inp.addEventListener('input', () => {
+        const d = NLA.save.data;
+        const v = inp.value.slice(0, 12);
+        if (inp.classList.contains('ne-boy')) d.nameBoy = v.trim() || 'Joku';
+        else d.nameGirl = v.trim() || 'Jolie';
+        NLA.save.store();
+        updateNameLabels();
+        syncNameInputs(inp);
+        if (NLA.net.active) NLA.net.sendMyName();
+      });
+    });
+  }
+
+  /* ---------------- toggles ---------------- */
+  UI.updateToggles = function () {
+    const d = NLA.save.data;
+    const langLabel = d.lang === 'en' ? '🌐 EN' : '🌐 VI';
+    const musLabel = d.music ? '🎵 On' : '🎵 Off';
+    const sfxLabel = d.sfx ? '🔔 On' : '🔔 Off';
+    $('btn-lang').textContent = langLabel; $('pause-lang').textContent = langLabel;
+    $('btn-music').textContent = musLabel; $('pause-music').textContent = musLabel;
+    $('btn-sfx').textContent = sfxLabel; $('pause-sfx').textContent = sfxLabel;
+  };
+
+  function toggleLang() {
+    const d = NLA.save.data;
+    d.lang = d.lang === 'en' ? 'vi' : 'en';
+    NLA.save.store();
+    UI.applyLang(); UI.updateToggles();
+    NLA.audio.sfx('click');
+  }
+  function toggleMusic() {
+    const d = NLA.save.data;
+    d.music = !d.music; NLA.save.store();
+    NLA.audio.setMusic(d.music);
+    UI.updateToggles(); NLA.audio.sfx('click');
+  }
+  function toggleSfx() {
+    const d = NLA.save.data;
+    d.sfx = !d.sfx; NLA.save.store();
+    NLA.audio.setSfx(d.sfx);
+    UI.updateToggles(); NLA.audio.sfx('click');
+  }
+
+  /* ---------------- menus ---------------- */
+  function bindMenus() {
+    const click = (id, fn) => $(id).addEventListener('click', () => { NLA.audio.unlock(); NLA.audio.sfx('click'); fn(); });
+
+    click('btn-solo', () => { hide('menu'); show('pick-panel'); });
+    click('btn-local', () => { game.mode = 'local'; hide('menu'); openLevelSelect(); });
+    click('btn-online', () => { hide('menu'); openOnline(); });
+    click('btn-wardrobe', () => { hide('menu'); openWardrobe(); });
+    click('btn-help', () => { hide('menu'); show('help-panel'); });
+    click('btn-lang', toggleLang);
+    click('btn-music', toggleMusic);
+    click('btn-sfx', toggleSfx);
+    click('help-back', () => { hide('help-panel'); show('menu'); });
+
+    /* solo char pick */
+    click('pick-boy', () => { game.mode = 'solo'; game.activeChar = 'boy'; hide('pick-panel'); openLevelSelect(); });
+    click('pick-girl', () => { game.mode = 'solo'; game.activeChar = 'girl'; hide('pick-panel'); openLevelSelect(); });
+    click('pick-back', () => { hide('pick-panel'); show('menu'); });
+
+    /* level select */
+    click('level-back', () => { hide('level-panel'); show('menu'); });
+
+    /* online */
+    click('online-back', () => {
+      NLA.net.cleanup();
+      hide('online-panel'); show('menu');
+      $('online-choose').classList.remove('hidden');
+      $('online-status').classList.add('hidden');
+    });
+    click('online-pick-boy', () => { UI.onlineChar = 'boy'; markOnlinePick(); });
+    click('online-pick-girl', () => { UI.onlineChar = 'girl'; markOnlinePick(); });
+    click('btn-host', () => startHost());
+    click('btn-join', () => startJoin());
+    $('join-code').addEventListener('input', (e) => { e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''); });
+
+    /* pause */
+    click('btn-pause', () => UI.pause());
+    click('btn-resume', () => UI.resume());
+    click('btn-restart', () => {
+      hideAllPanels(); hide('pause-panel');
+      if (NLA.net.active) { NLA.net.send({ t: 'level', idx: game.levelIdx }); }
+      UI.startLevelFlow(game.levelIdx, false, true);
+    });
+    click('btn-quit', () => UI.quitToMenu());
+    window.addEventListener('keydown', (e) => {
+      if (e.code === 'Escape' && game.state === 'play') {
+        game.paused ? UI.resume() : UI.pause();
+      }
+    });
+    click('pause-lang', toggleLang);
+    click('pause-music', toggleMusic);
+    click('pause-sfx', toggleSfx);
+
+    /* story / memory / complete */
+    click('story-next', () => advanceStory());
+    click('memory-close', () => {
+      hide('memory');
+      if (game.state === 'memory') game.state = 'play';
+    });
+    click('btn-next-level', () => {
+      hide('complete');
+      const next = game.levelIdx + 1;
+      if (next < NLA.LEVELS.length) {
+        if (NLA.net.active) NLA.net.send({ t: 'level', idx: next });
+        UI.startLevelFlow(next, false, true);
+      } else UI.quitToMenu();
+    });
+    click('btn-complete-menu', () => UI.quitToMenu());
+
+    /* wardrobe */
+    click('wardrobe-back', () => { hide('wardrobe-panel'); show('menu'); });
+
+    /* net hooks */
+    NLA.net.onStatus = onNetStatus;
+    NLA.net.onMessage = (msg) => game.onNetMessage(msg);
+
+    NLA.input.bindTouchUI();
+  }
+
+  UI.pause = function () {
+    if (game.state !== 'play') return;
+    game.paused = true;
+    show('pause-panel');
+    /* net: pausing only pauses locally; hide restart for guest */
+    $('btn-restart').style.display = (NLA.net.active && !NLA.net.isHost) ? 'none' : '';
+  };
+  UI.resume = function () {
+    game.paused = false;
+    hide('pause-panel');
+  };
+  UI.quitToMenu = function () {
+    NLA.net.cleanup();
+    hideAllPanels();
+    game.state = 'idle';
+    game.paused = false;
+    game.mode = 'solo';
+    NLA.draw.particles.clear();
+    NLA.audio.setTheme('menu');
+    NLA.audio.setIntensity(0.3);
+    hide('topbar'); hide('touch-ui');
+    show('menu');
+    game._menuBuilt = false;
+  };
+
+  /* ---------------- level select ---------------- */
+  function openLevelSelect() {
+    const list = $('level-list');
+    list.innerHTML = '';
+    const unlocked = NLA.save.data.unlocked;
+    NLA.LEVELS.forEach((lv, i) => {
+      const item = document.createElement('button');
+      item.className = 'level-item' + (i + 1 > unlocked ? ' locked' : '');
+      item.innerHTML = `<span class="lv-num">${i + 1}</span>
+        <span class="lv-name">${NLA.t('lvName' + (i + 1))}</span>
+        <span class="lv-state">${i + 1 > unlocked ? '🔒' : (i + 1 < unlocked ? '🏮' : '✨')}</span>`;
+      if (i + 1 <= unlocked) {
+        item.addEventListener('click', () => {
+          NLA.audio.sfx('click');
+          hide('level-panel');
+          if (NLA.net.active) NLA.net.send({ t: 'level', idx: i });
+          UI.startLevelFlow(i, false, true);
+        });
+      }
+      list.appendChild(item);
+    });
+    show('level-panel');
+  }
+
+  /* ---------------- start / story flow ---------------- */
+  let storyQueue = [], storyDone = null;
+
+  UI.startLevelFlow = function (idx, fromNet, withIntro) {
+    hideAllPanels();
+    NLA.audio.unlock();
+    show('topbar');
+    if (NLA.input.isTouchDevice) { show('touch-ui'); UI.updateTouchIcons(); }
+    const lv = NLA.LEVELS[idx];
+    const slides = [];
+    if (idx === 0 && (withIntro || fromNet)) slides.push(...NLA.t('intro'));
+    slides.push(NLA.t(lv.introKey));
+    game.loadLevel(idx);
+    game.paused = true;
+    showStory(slides, () => { game.paused = false; });
+  };
+
+  function showStory(slides, done) {
+    storyQueue = slides.slice();
+    storyDone = done;
+    show('story');
+    advanceStory(true);
+  }
+  function advanceStory(first) {
+    if (!first) NLA.audio.sfx('click');
+    if (storyQueue.length === 0) {
+      hide('story');
+      if (storyDone) { const f = storyDone; storyDone = null; f(); }
+      return;
+    }
+    const el = $('story-text');
+    el.style.opacity = 0;
+    const text = storyQueue.shift();
+    setTimeout(() => { el.textContent = text; el.style.transition = 'opacity .5s'; el.style.opacity = 1; }, 60);
+  }
+
+  /* ---------------- memory ---------------- */
+  UI.showMemory = function (idx) {
+    const mems = NLA.t('memories');
+    $('memory-text').textContent = mems[idx % mems.length];
+    show('memory');
+  };
+
+  /* ---------------- complete ---------------- */
+  UI.showComplete = function (stats) {
+    const s = $('complete-stats');
+    s.innerHTML =
+      `⏱ ${NLA.t('statTime')}: <b>${NLA.util.fmtTime(stats.time)}</b><br>` +
+      `✨ ${NLA.t('statCharms')}: <b>${stats.charms}</b><br>` +
+      `💗 ${NLA.t('statLove')}: <b>+${Math.round(stats.love)}</b><br>` +
+      `🏮 ${NLA.t('statMemories')}: <b>${stats.memories}</b>`;
+    const nextBtn = $('btn-next-level');
+    nextBtn.style.display = (NLA.net.active && !NLA.net.isHost) ? 'none' : '';
+    if (stats.last) nextBtn.style.display = 'none';
+    show('complete');
+  };
+
+  /* ---------------- ending ---------------- */
+  UI.showEnding = function () {
+    const d = NLA.save.data;
+    let firstFinish = !d.finished;
+    d.finished = true;
+    NLA.save.store();
+    const slides = NLA.t('ending').slice();
+    showStory(slides, () => {
+      if (firstFinish) UI.toast(NLA.t('endingUnlock'), 5000);
+      UI.quitToMenu();
+    });
+  };
+
+  /* ---------------- online flow ---------------- */
+  function openOnline() {
+    UI.onlineChar = UI.onlineChar || 'boy';
+    markOnlinePick();
+    if (!NLA.net.available()) {
+      $('online-msg').textContent = NLA.t('needPeer');
+      show('online-status');
+    }
+    show('online-panel');
+  }
+  function markOnlinePick() {
+    $('online-pick-boy').classList.toggle('selected', UI.onlineChar === 'boy');
+    $('online-pick-girl').classList.toggle('selected', UI.onlineChar === 'girl');
+  }
+  function startHost() {
+    if (!NLA.net.available()) { UI.toast(NLA.t('needPeer')); return; }
+    game.mode = 'net';
+    $('online-choose').classList.add('hidden');
+    show('online-status');
+    $('online-msg').textContent = NLA.t('connecting');
+    NLA.net.host(UI.onlineChar);
+  }
+  function startJoin() {
+    if (!NLA.net.available()) { UI.toast(NLA.t('needPeer')); return; }
+    const code = $('join-code').value.trim();
+    if (code.length < 4) { $('join-code').focus(); return; }
+    game.mode = 'net';
+    $('online-choose').classList.add('hidden');
+    show('online-status');
+    $('online-msg').textContent = NLA.t('connecting');
+    NLA.net.join(code);
+  }
+
+  function onNetStatus(status, detail) {
+    switch (status) {
+      case 'waiting':
+        $('online-msg').textContent = NLA.t('waitingPartner');
+        $('room-code').textContent = detail.split('').join(' ');
+        $('room-code-box').classList.remove('hidden');
+        break;
+      case 'connected':
+        $('online-msg').textContent = NLA.t('partnerJoined');
+        $('room-code-box').classList.add('hidden');
+        setTimeout(() => {
+          if (NLA.net.isHost) { hide('online-panel'); openLevelSelect(); }
+          else $('online-msg').textContent = NLA.t('partnerJoined');
+        }, 700);
+        break;
+      case 'joinfail':
+        $('online-msg').textContent = NLA.t('joinFail');
+        $('online-choose').classList.remove('hidden');
+        break;
+      case 'nopeer':
+        $('online-msg').textContent = NLA.t('needPeer');
+        break;
+      case 'lost':
+        UI.toast(NLA.t('netLost'), 5000);
+        if (game.state !== 'idle') {
+          /* AI takes over the partner */
+          game.mode = 'solo';
+          const mine = NLA.net.myChar;
+          game.activeChar = mine;
+          for (const p of game.players || []) p.remote = false;
+        } else {
+          UI.quitToMenu();
+        }
+        break;
+      case 'error':
+        $('online-msg').textContent = '💔 ' + (detail && detail.type ? detail.type : 'connection error');
+        $('online-choose').classList.remove('hidden');
+        break;
+    }
+  }
+
+  /* ---------------- wardrobe ---------------- */
+  function openWardrobe() {
+    $('wardrobe-charms').textContent = NLA.save.data.charms;
+    renderCostumes();
+    show('wardrobe-panel');
+  }
+  let wardrobeWho = 'boy';
+  function renderCostumes() {
+    const list = $('costume-list');
+    list.innerHTML = '';
+    const d = NLA.save.data;
+    /* who toggle */
+    const whoRow = document.createElement('div');
+    whoRow.style.cssText = 'grid-column:1/-1;display:flex;gap:8px;justify-content:center;margin-bottom:4px;';
+    ['boy', 'girl'].forEach(w => {
+      const b = document.createElement('button');
+      b.className = 'btn btn-half';
+      b.style.width = '40%';
+      b.textContent = (w === 'boy' ? '💙 ' : '💗 ') + NLA.name(w);
+      if (wardrobeWho === w) b.classList.add('btn-primary');
+      b.addEventListener('click', () => { wardrobeWho = w; NLA.audio.sfx('click'); renderCostumes(); });
+      whoRow.appendChild(b);
+    });
+    list.appendChild(whoRow);
+
+    NLA.COSTUMES.forEach(c => {
+      const unlocked = c.need === -1 ? d.finished : d.charms >= c.need;
+      const sel = (wardrobeWho === 'boy' ? d.costumeBoy : d.costumeGirl) === c.id;
+      const item = document.createElement('button');
+      item.className = 'costume-item' + (sel ? ' selected' : '') + (unlocked ? '' : ' locked');
+      const pal = c[wardrobeWho];
+      item.innerHTML = `<b>${NLA.t('costume_' + c.id)}</b>
+        <span class="sw"><i style="background:${pal.robe1}"></i><i style="background:${pal.robe2}"></i><i style="background:${pal.trim}"></i></span>
+        <small>${unlocked ? '✓' : (c.need === -1 ? NLA.t('weddingNeed') : `🏮 ${c.need} ${NLA.t('unlockedAt')}`)}</small>`;
+      if (unlocked) {
+        item.addEventListener('click', () => {
+          if (wardrobeWho === 'boy') d.costumeBoy = c.id; else d.costumeGirl = c.id;
+          NLA.save.store();
+          NLA.audio.sfx('chime', 3);
+          renderCostumes();
+        });
+      }
+      list.appendChild(item);
+    });
+  }
+
+  /* ---------------- touch icons per character ---------------- */
+  UI.updateTouchIcons = function () {
+    let who = 'boy';
+    if (game.mode === 'net') who = NLA.net.myChar;
+    else if (game.mode === 'solo') who = game.activeChar;
+    $('tc-pow1-ico').textContent = who === 'boy' ? '🌀' : '✨';
+    $('tc-pow2-ico').textContent = who === 'boy' ? '🛡' : '🌸';
+    $('tc-switch-btn').style.display = game.mode === 'solo' ? '' : 'none';
+  };
+
+  /* ---------------- character preview canvases ---------------- */
+  function startPreviewLoops() {
+    const canvases = [
+      { id: 'pick-canvas-boy', who: 'boy', s: 1.5 },
+      { id: 'pick-canvas-girl', who: 'girl', s: 1.5 },
+      { id: 'online-canvas-boy', who: 'boy', s: 1.15 },
+      { id: 'online-canvas-girl', who: 'girl', s: 1.15 },
+    ];
+    function frame(ts) {
+      const t = ts / 1000;
+      for (const cv of canvases) {
+        const el = $(cv.id);
+        if (!el || el.offsetParent === null) continue;
+        const ctx = el.getContext('2d');
+        ctx.clearRect(0, 0, el.width, el.height);
+        NLA.chars.drawPreview(ctx, cv.who, NLA.costumeFor(cv.who), el.width / 2, el.height - 18, cv.s, t);
+      }
+      /* wardrobe preview: the couple side by side */
+      const wc = $('wardrobe-canvas');
+      if (wc && wc.offsetParent !== null) {
+        const ctx = wc.getContext('2d');
+        ctx.clearRect(0, 0, wc.width, wc.height);
+        NLA.chars.drawPreview(ctx, 'boy', NLA.costumeFor('boy'), wc.width / 2 - 55, wc.height - 22, 1.55, t);
+        NLA.chars.drawPreview(ctx, 'girl', NLA.costumeFor('girl'), wc.width / 2 + 55, wc.height - 22, 1.55, t + 0.5);
+      }
+      requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  }
+
+  NLA.ui = UI;
+})();
