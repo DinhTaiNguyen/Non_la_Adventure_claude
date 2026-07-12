@@ -29,6 +29,35 @@
   window.addEventListener('blur', () => { for (const k in keys) keys[k] = false; resetTouch(); });
   document.addEventListener('visibilitychange', () => { if (document.hidden) resetTouch(); });
 
+  /* --- mobile zoom guards ---------------------------------------------
+     The viewport meta (user-scalable=no) stops zoom on Android, but iOS
+     Safari ignores it, so rapid taps while moving / using skills or two
+     thumbs landing at once could pinch- or double-tap-zoom the page.
+     CSS touch-action handles most of it; these listeners close the rest. */
+  if (I.isTouchDevice) {
+    /* iOS pinch gesture (fires regardless of touch-action) */
+    for (const type of ['gesturestart', 'gesturechange', 'gestureend']) {
+      document.addEventListener(type, (e) => { e.preventDefault(); }, { passive: false });
+    }
+    /* two fingers down (move thumb + action thumb) must never become a
+       browser pinch; single-finger moves stay untouched so panels scroll */
+    document.addEventListener('touchmove', (e) => {
+      if (e.touches.length > 1 && e.cancelable) e.preventDefault();
+    }, { passive: false });
+    /* double-tap-to-zoom guard on the game surfaces only: menu buttons and
+       inputs keep their normal fast-tap behaviour, while spamming jump /
+       skills / emotes on the canvas or the touch pads can't zoom */
+    let lastTapEnd = 0;
+    document.addEventListener('touchend', (e) => {
+      const onGameSurface = e.target && e.target.closest &&
+        e.target.closest('#game, #touch-ui, #topbar, #touch-guide');
+      if (!onGameSurface) return;
+      const now = Date.now();
+      if (now - lastTapEnd <= 340 && e.cancelable) e.preventDefault();
+      lastTapEnd = now;
+    }, { passive: false });
+  }
+
   function resetMovement() {
     movementPointer = null;
     I.touch.left = false;

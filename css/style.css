@@ -25,7 +25,15 @@ html, body {
   overscroll-behavior: none;
   user-select: none;
   -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-text-size-adjust: 100%;
 }
+
+/* touch-action does NOT inherit — without an explicit value every element
+   defaults to `auto`, which lets mobile Safari double-tap-zoom / pinch-zoom
+   from any button or panel. Allow panning only (panel scrolling keeps
+   working); more specific rules below turn even that off on game surfaces. */
+*, *::before, *::after { touch-action: pan-x pan-y; }
 
 #app { position: fixed; inset: 0; }
 
@@ -167,7 +175,9 @@ h4 { color: var(--gold); margin-bottom: 8px; }
   border: 1.5px solid rgba(245,201,107,.5);
   border-radius: 10px;
   color: var(--cream);
-  font-size: 14px; font-weight: 600;
+  /* 16px minimum: iOS Safari auto-zooms the page when focusing any input
+     with a smaller font, and that zoom sticks after the keyboard closes */
+  font-size: 16px; font-weight: 600;
   text-align: center;
   padding: 7px 8px;
   font-family: inherit;
