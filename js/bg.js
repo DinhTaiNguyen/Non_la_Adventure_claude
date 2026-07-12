@@ -4,6 +4,8 @@
    ===================================================================== */
 (function () {
   const TILE_W = 1600, TILE_H = 620;
+  const coarsePointer = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+  const TILE_RASTER_SCALE = coarsePointer ? 0.75 : 1;
 
   const THEMES = {
     street: { skyTop: '#241340', skyMid: '#4a2560', skyBot: '#c86a4a', moon: 0.6, stars: 0.7 },
@@ -215,8 +217,11 @@
   /* --------------- theme layer builders --------------- */
   function makeTile(painter) {
     const c = document.createElement('canvas');
-    c.width = TILE_W; c.height = TILE_H;
-    painter(c.getContext('2d'));
+    c.width = Math.round(TILE_W * TILE_RASTER_SCALE);
+    c.height = Math.round(TILE_H * TILE_RASTER_SCALE);
+    const g = c.getContext('2d');
+    g.scale(TILE_RASTER_SCALE, TILE_RASTER_SCALE);
+    painter(g);
     return c;
   }
 
@@ -483,7 +488,7 @@
         let ox = -(camX * layer.factor) % TILE_W;
         if (ox > 0) ox -= TILE_W;
         for (let x = ox; x < vw; x += TILE_W) {
-          ctx.drawImage(layer.canvas, x, y);
+          ctx.drawImage(layer.canvas, x, y, TILE_W, TILE_H);
         }
       }
     },

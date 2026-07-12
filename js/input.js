@@ -6,6 +6,9 @@
 (function () {
   const keys = {};
   const touchBindings = [];
+  let movementPointer = null;
+  let movementZone = null;
+  let movementStick = null;
   const I = {
     keys,
     touch: { left: false, right: false, jump: false, pow1: false, pow2: false },
@@ -26,9 +29,21 @@
   window.addEventListener('blur', () => { for (const k in keys) keys[k] = false; resetTouch(); });
   document.addEventListener('visibilitychange', () => { if (document.hidden) resetTouch(); });
 
+  function resetMovement() {
+    movementPointer = null;
+    I.touch.left = false;
+    I.touch.right = false;
+    if (movementZone) movementZone.classList.remove('pressed');
+    if (movementStick) {
+      movementStick.classList.add('hidden');
+      movementStick.style.setProperty('--move-x', '0px');
+    }
+  }
+
   function resetTouch() {
     const t = I.touch;
     t.left = t.right = t.jump = t.pow1 = t.pow2 = false;
+    resetMovement();
     I.swapPressed = false;
     I.emotePressed = 0;
     I.handsPressedTouch = false;
@@ -38,6 +53,7 @@
       binding.el.setAttribute('aria-pressed', 'false');
     }
   }
+  I.resetTouch = resetTouch;
 
   /* --- controller readers --- */
   /* P1 = boy on keyboard-left (WASD/E/Q), P2 = girl on arrows (O/P). */
@@ -66,7 +82,7 @@
       jump: !!(keys.KeyW || keys.ArrowUp || keys.Space || t.jump),
       pow1: !!(keys.KeyE || keys.KeyO || t.pow1),
       pow2: !!(keys.KeyQ || keys.KeyP || t.pow2),
-      hands: !!(keys.KeyH || I.handsHeldTouch),
+      hands: !!keys.KeyH,
     };
   };
 
@@ -85,6 +101,55 @@
       try { el.setPointerCapture(pointerId); } catch (_) { /* capture is optional */ }
     };
     const isPrimaryPress = (e) => e.button === undefined || e.button === 0;
+
+    const bindMoveZone = () => {
+      const el = document.getElementById('tc-move-zone');
+      if (!el) return;
+      movementZone = el;
+      movementStick = document.getElementById('tc-move-stick');
+      const playable = () => {
+        const g = NLA.game;
+        return I.isTouchDevice && g && g.state === 'play' && !g.paused && g.mode !== 'local';
+      };
+      const release = (e, prevent) => {
+        if (!movementPointer || movementPointer.id !== e.pointerId) return;
+        if (prevent && e.cancelable) e.preventDefault();
+        resetMovement();
+      };
+      const update = (e) => {
+        if (!movementPointer || movementPointer.id !== e.pointerId) return;
+        const deadZone = Math.max(18, Math.min(36, el.clientWidth * 0.07));
+        const dx = e.clientX - movementPointer.startX;
+        I.touch.left = dx < -deadZone;
+        I.touch.right = dx > deadZone;
+        if (movementStick) movementStick.style.setProperty('--move-x', `${Math.max(-32, Math.min(32, dx))}px`);
+      };
+      el.addEventListener('pointerdown', (e) => {
+        if (!isPrimaryPress(e) || movementPointer || !playable()) return;
+        if (e.cancelable) e.preventDefault();
+        const rect = el.getBoundingClientRect();
+        movementPointer = { id: e.pointerId, startX: e.clientX };
+        capture(el, e.pointerId);
+        el.classList.add('pressed');
+        if (movementStick) {
+          movementStick.style.left = `${e.clientX - rect.left}px`;
+          movementStick.style.top = `${e.clientY - rect.top}px`;
+          movementStick.style.setProperty('--move-x', '0px');
+          movementStick.classList.remove('hidden');
+        }
+      });
+      el.addEventListener('pointermove', (e) => {
+        if (!movementPointer || movementPointer.id !== e.pointerId) return;
+        if (e.cancelable) e.preventDefault();
+        update(e);
+      });
+      el.addEventListener('pointerup', (e) => release(e, true));
+      el.addEventListener('pointercancel', (e) => release(e, true));
+      el.addEventListener('lostpointercapture', (e) => release(e, false));
+      window.addEventListener('pointerup', (e) => release(e, false));
+      window.addEventListener('pointercancel', (e) => release(e, false));
+    };
+    bindMoveZone();
 
     const bindHeld = (id, prop) => {
       const el = document.getElementById(id);
@@ -113,8 +178,6 @@
       el.addEventListener('lostpointercapture', (e) => release(e, false));
       touchBindings.push({ el, pointers, release });
     };
-    bindHeld('tc-left-btn', 'left');
-    bindHeld('tc-right-btn', 'right');
     bindHeld('tc-jump-btn', 'jump');
     bindHeld('tc-pow1-btn', 'pow1');
     bindHeld('tc-pow2-btn', 'pow2');

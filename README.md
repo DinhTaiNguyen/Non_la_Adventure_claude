@@ -55,7 +55,8 @@ partner (press `Tab` to swap characters).
 | 2nd power | hold `Q` — shield | `P` — grow lotus |
 
 **Together:** `H` hold hands · `Tab` swap (solo) · `1/2/3` emotes · `Esc` pause.
-On phones, touch buttons appear automatically.
+On phones, drag anywhere on the left side of the screen to walk left or right;
+the action buttons stay under your right thumb.
 
 ## 🏮 How to play
 

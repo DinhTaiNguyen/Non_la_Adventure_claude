@@ -201,6 +201,7 @@
 
   UI.pause = function () {
     if (game.state !== 'play') return;
+    NLA.input.resetTouch();
     game.paused = true;
     hide('touch-guide');
     show('pause-panel');
@@ -212,6 +213,7 @@
     hide('pause-panel');
   };
   UI.quitToMenu = function () {
+    NLA.input.resetTouch();
     NLA.net.cleanup();
     hideAllPanels();
     game.state = 'idle';
@@ -253,6 +255,7 @@
   let storyQueue = [], storyDone = null;
 
   UI.startLevelFlow = function (idx, fromNet, withIntro) {
+    NLA.input.resetTouch();
     hideAllPanels();
     NLA.audio.unlock();
     show('topbar');
@@ -329,11 +332,26 @@
   function openOnline() {
     UI.onlineChar = UI.onlineChar || 'boy';
     markOnlinePick();
-    if (!NLA.net.available()) {
-      $('online-msg').textContent = NLA.t('needPeer');
-      show('online-status');
-    }
+    $('room-code-box').classList.add('hidden');
     show('online-panel');
+    if (NLA.net.available()) {
+      $('online-choose').classList.remove('hidden');
+      hide('online-status');
+      return;
+    }
+
+    $('online-choose').classList.add('hidden');
+    $('online-msg').textContent = NLA.t('loadingOnline');
+    show('online-status');
+    NLA.net.loadPeer().then((ready) => {
+      if ($('online-panel').classList.contains('hidden')) return;
+      if (ready) {
+        hide('online-status');
+        $('online-choose').classList.remove('hidden');
+      } else {
+        $('online-msg').textContent = NLA.t('needPeer');
+      }
+    });
   }
   function markOnlinePick() {
     $('online-pick-boy').classList.toggle('selected', UI.onlineChar === 'boy');
@@ -458,8 +476,6 @@
     $('tc-pow1-copy').textContent = pow1.label;
     $('tc-pow2-copy').textContent = pow2.label;
     $('tc-jump-copy').textContent = NLA.t('touchJump');
-    $('tc-left-btn').setAttribute('aria-label', NLA.t('touchMoveLeft'));
-    $('tc-right-btn').setAttribute('aria-label', NLA.t('touchMoveRight'));
     $('tc-jump-btn').setAttribute('aria-label', NLA.t('touchJump'));
     $('tc-pow1-btn').setAttribute('aria-label', pow1.label);
     $('tc-pow2-btn').setAttribute('aria-label', pow2.label);

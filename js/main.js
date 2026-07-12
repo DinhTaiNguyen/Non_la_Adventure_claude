@@ -8,23 +8,29 @@
   const game = new NLA.Game(canvas);
   NLA.game = game;
 
-  /* ---- resize (DPR-aware, with a gentler mobile quality tier) ---- */
+  /* ---- resize (DPR-aware and bounded by a sensible pixel budget) ---- */
   let sizedW = 0, sizedH = 0, sizedDpr = 0, resizeFrame = 0;
-  function resize() {
+  function renderDpr(iw, ih) {
+    const deviceDpr = window.devicePixelRatio || 1;
     const dprCap = NLA.input.isTouchDevice ? 1.5 : 2;
-    const dpr = Math.min(dprCap, window.devicePixelRatio || 1);
+    const pixelBudget = NLA.input.isTouchDevice ? 2500000 : 6000000;
+    const budgetDpr = Math.sqrt(pixelBudget / Math.max(1, iw * ih));
+    return Math.max(1, Math.min(dprCap, deviceDpr, budgetDpr));
+  }
+  function resize() {
     const iw = window.innerWidth || 0, ih = window.innerHeight || 0;
     if (iw < 2 || ih < 2) return;          /* pane not laid out yet */
+    const dpr = renderDpr(iw, ih);
     if (iw === sizedW && ih === sizedH && dpr === sizedDpr) {
       checkRotate();
       return;
     }
     sizedW = iw; sizedH = ih; sizedDpr = dpr;
-    game.resize(Math.floor(iw * dpr), Math.floor(ih * dpr));
+    game.resize(Math.max(1, Math.floor(iw * dpr)), Math.max(1, Math.floor(ih * dpr)));
     checkRotate();
   }
   function queueResize() {
-    if (resizeFrame) return;
+    if (resizeFrame || document.hidden) return;
     resizeFrame = requestAnimationFrame(() => {
       resizeFrame = 0;
       resize();
@@ -49,9 +55,7 @@
   /* ---- UI ---- */
   NLA.ui.init(game);
 
-  /* ---- main loop (fixed timestep sim, rAF render) ----
-     A watchdog may draw a throttled embedded view, but it never owns or
-     schedules rAF. That prevents duplicate permanent game loops. */
+  /* ---- main loop (fixed timestep sim, rAF render) ---- */
   let last = performance.now();
   let acc = 0;
   let rafId = 0;
@@ -60,15 +64,21 @@
   let lastSizeProbe = last;
   let lastDraw = -Infinity;
   const STEP = 1 / 60;
-  const MOBILE_RENDER_MS = NLA.input.isTouchDevice ? (1000 / 60) : 0;
+  const GAME_RENDER_MS = NLA.input.isTouchDevice ? (1000 / 60) : 0;
+  const IDLE_RENDER_MS = 1000 / 30;
 
   function scheduleFrame() {
-    if (!rafId) rafId = requestAnimationFrame(loop);
+    if (!rafId && !document.hidden) rafId = requestAnimationFrame(loop);
   }
-
+  function renderInterval() {
+    if (game.state === 'idle' || game.paused || game.state === 'memory' || game.state === 'complete') {
+      return IDLE_RENDER_MS;
+    }
+    return GAME_RENDER_MS;
+  }
   function runFrame(now, fallback) {
-    /* Some embedded panes miss resize events, so probe occasionally instead
-       of checking layout and potentially resizing every frame. */
+    /* Embedded panes occasionally miss resize events, so probe rarely rather
+       than reading layout every frame. */
     if (now - lastSizeProbe > 1000) {
       lastSizeProbe = now;
       if (window.innerWidth !== sizedW || window.innerHeight !== sizedH) resize();
@@ -88,43 +98,49 @@
     }
     if (steps === 5) acc = 0;
 
-    if (!MOBILE_RENDER_MS || now - lastDraw >= MOBILE_RENDER_MS - 0.5 || fallback) {
+    const every = renderInterval();
+    if (!every || now - lastDraw >= every - 0.5) {
       game.draw();
       lastDraw = now;
     }
   }
-
   function loop(now) {
     rafId = 0;
+    if (document.hidden) return;
     lastRafTick = now;
-    if (document.hidden) {
-      last = now;
-      acc = 0;
-      scheduleFrame();
-      return;
-    }
     runFrame(now, false);
     scheduleFrame();
   }
   scheduleFrame();
 
-  /* Embedded contexts occasionally throttle rAF while still visible. Keep
-     a lightweight fallback alive without starting another rAF chain. */
-  setInterval(() => {
-    const now = performance.now();
-    if (document.hidden || now - lastRafTick <= 400 || now - lastFallbackTick < 90) return;
-    lastFallbackTick = now;
-    runFrame(now, true);
-  }, 100);
+  /* A timer fallback is only useful inside an embedded frame where a host
+     may throttle rAF while the game is still visibly on screen. */
+  let isEmbedded = false;
+  try { isEmbedded = window.self !== window.top; } catch (_) { isEmbedded = true; }
+  if (isEmbedded) {
+    setInterval(() => {
+      const now = performance.now();
+      if (document.hidden || now - lastRafTick <= 450 || now - lastFallbackTick < 120) return;
+      lastFallbackTick = now;
+      runFrame(now, true);
+    }, 120);
+  }
 
-  /* Keep time and audio healthy when the tab returns. */
+  /* Stop background work completely; restart cleanly when the tab returns. */
   document.addEventListener('visibilitychange', () => {
-    if (!document.hidden) {
+    if (document.hidden) {
+      if (rafId) cancelAnimationFrame(rafId);
+      if (resizeFrame) cancelAnimationFrame(resizeFrame);
+      rafId = 0;
+      resizeFrame = 0;
       last = performance.now();
       acc = 0;
-      NLA.audio.unlock();
-      queueResize();
-      scheduleFrame();
+      return;
     }
+    last = performance.now();
+    acc = 0;
+    NLA.audio.unlock();
+    queueResize();
+    scheduleFrame();
   });
 })();

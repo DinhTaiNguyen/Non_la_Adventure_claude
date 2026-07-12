@@ -11,6 +11,7 @@
     code: null, myChar: 'boy', status: 'idle',
     onMessage: null, onStatus: null,
     _sendAcc: 0,
+    _peerLoad: null,
   };
 
   N.hostSimObjects = () => !N.active || N.isHost;
@@ -28,6 +29,29 @@
   }
 
   N.available = () => typeof window.Peer === 'function';
+
+  /* PeerJS is only needed for online co-op. Loading it on demand keeps the
+     solo/local game fast and usable even when the CDN is unavailable. */
+  N.loadPeer = function () {
+    if (N.available()) return Promise.resolve(true);
+    if (N._peerLoad) return N._peerLoad;
+    N._peerLoad = new Promise((resolve) => {
+      const script = document.createElement('script');
+      script.src = 'https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js';
+      script.async = true;
+      script.onload = () => {
+        N._peerLoad = null;
+        resolve(N.available());
+      };
+      script.onerror = () => {
+        script.remove();
+        N._peerLoad = null;
+        resolve(false);
+      };
+      document.head.appendChild(script);
+    });
+    return N._peerLoad;
+  };
 
   N.host = function (charChoice) {
     if (!N.available()) { setStatus('nopeer'); return; }

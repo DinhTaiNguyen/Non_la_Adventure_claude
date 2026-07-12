@@ -36,10 +36,26 @@
     const c = ctx();
     if (!c) return;
     if (c.state === 'suspended') c.resume();
-    if (!A.started) { A.started = true; A._nextBar = c.currentTime + 0.1; scheduler(); }
+    if (!A.started && NLA.save.data.music) {
+      A.started = true;
+      A._nextBar = c.currentTime + 0.1;
+      scheduler();
+    }
   };
 
-  A.setMusic = function (on) { if (A.musicGain) A.musicGain.gain.setTargetAtTime(on ? 0.55 : 0, ctx().currentTime, 0.2); };
+  A.setMusic = function (on) {
+    if (!A.musicGain || !A.ctx) return;
+    A.musicGain.gain.setTargetAtTime(on ? 0.55 : 0, A.ctx.currentTime, 0.2);
+    if (on && !A.started) {
+      A.started = true;
+      A._nextBar = A.ctx.currentTime + 0.1;
+      scheduler();
+    } else if (!on) {
+      if (A._timer) clearTimeout(A._timer);
+      A._timer = null;
+      A.started = false;
+    }
+  };
   A.setSfx = function (on) { if (A.sfxGain) A.sfxGain.gain.setTargetAtTime(on ? 0.8 : 0, ctx().currentTime, 0.05); };
   A.setTheme = function (theme) { A._theme = theme; };
   A.setIntensity = function (v) { A.intensity = NLA.util.clamp(v, 0, 1); };
@@ -219,7 +235,7 @@
   }
 
   function scheduler() {
-    if (!A.ctx) return;
+    if (!A.ctx || !A.started) return;
     const now = A.ctx.currentTime;
     while (A._nextBar < now + 1.2) {
       const len = scheduleBar(A._nextBar);
