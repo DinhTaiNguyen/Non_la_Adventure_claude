@@ -18,12 +18,29 @@ NLA.CONST = {
   HANDS_DIST: 80,
   LOVE_MAX: 100,
   LOVE_LEVELS: [15, 35, 55, 75, 95],
+  HAT_SPECIAL_COST: 42,
+  HAT_SPECIAL_REGEN: 7.5,
+  HAT_XP_LEVELS: [0, 40, 100, 180, 280, 400],
 };
 
 /* love gain amounts */
 NLA.LOVE = {
   lantern: 4, puzzle: 6, memory: 10, checkpoint: 8,
   save: 6, heartPair: 5, assist: 2, dispel: 1,
+};
+
+/* Online play uses direct WebRTC when possible. Strict routers and mobile
+   carriers need TURN. A deployment can inject short-lived TURN credentials
+   through window.NLA_TURN_SERVERS before config.js loads, or provide an
+   endpoint through window.NLA_TURN_ENDPOINT which returns { iceServers: [] }.
+   Never place permanent private credentials in this public repository. */
+NLA.NETWORK = {
+  version: 2,
+  turnEndpoint: window.NLA_TURN_ENDPOINT || '',
+  iceServers: [
+    { urls: 'stun:stun.l.google.com:19302' },
+    { urls: 'stun:stun.cloudflare.com:3478' },
+  ].concat(Array.isArray(window.NLA_TURN_SERVERS) ? window.NLA_TURN_SERVERS : []),
 };
 
 /* ---------------- costumes (palette swaps) ---------------- */
@@ -60,17 +77,21 @@ NLA.I18N = {
     playSolo: 'Play Solo', local2p: '2 Players · One Keyboard', online: 'Play Online Together 💞',
     wardrobe: 'Wardrobe', howto: 'How to Play', back: 'Back', select: 'Select',
     menuFoot: 'A cozy Vietnamese fairytale about love & light ✨',
-    pickChar: 'Choose your character', boyDesc: 'Wind · Shield · Strength', girlDesc: 'Light · Lotus · Healing',
+    pickChar: 'Choose your character', boyDesc: 'Wind blade · Reflecting shield · Nón Lá magic', girlDesc: 'Light pulse · Lotus healing · Nón Lá magic',
     soloHint: 'Your partner follows you — press Tab / 🔄 to swap anytime.',
     chooseLevel: 'Choose a chapter',
     onlineTitle: 'Play Together Online 💞',
-    onlineHint: 'One of you creates a room, the other joins with the 4-letter code. Works on phones and computers, anywhere in the world!',
+    onlineHint: 'One person creates a room and shares the 4-letter code. Direct play works worldwide; a configured TURN relay carries the game through strict routers and mobile networks.',
     onlinePickHint: 'Pick who YOU play — your partner gets the other.',
     hostGame: 'Create a room 💌', joinGame: 'Join', shareCode: 'Share this code with your love:',
-    loadingOnline: 'Preparing online play…', connecting: 'Lighting the connection lantern…', waitingPartner: 'Waiting for your partner to join…',
-    partnerJoined: 'Your partner is here! 💗 Starting…', joinFail: 'Could not find that room. Check the code?',
+    loadingOnline: 'Preparing worldwide online play…', connecting: 'Finding a path across the world…', waitingPartner: 'Room ready — waiting for your partner…',
+    partnerJoined: 'Your partner is here! 💗 Starting…', joinFail: 'Could not reach that room. Check the code, keep the host page open, then try again.',
     netLost: 'Connection drifted away 🌬 — partner is now guided by lantern spirits.',
     needPeer: 'Online play needs internet (PeerJS could not load).',
+    relayReady: '🌏 Worldwide relay ready — strict networks can connect.',
+    relayMissing: '⚠ Direct connection only. Add TURN relay credentials before overseas play for reliable connection.',
+    retryingOnline: 'The first path was blocked — trying another route…',
+    connectedDirect: 'Connected directly across the world 💞', connectedRelay: 'Connected through the worldwide relay 💞',
     paused: 'Paused 🌙', resume: 'Resume', restart: 'Restart chapter', backToMenu: 'Back to menu',
     continue: 'Continue ➜', keepGoing: 'Keep it in our hearts 💗',
     memoryTitle: 'A warm memory returns…',
@@ -80,8 +101,23 @@ NLA.I18N = {
     charmsOwned: 'Charms collected', rotate: 'Please rotate your phone to landscape 💛',
     touchMoveLeft: 'Move left', touchMoveRight: 'Move right', touchJump: 'Jump',
     touchWind: 'Wind', touchShield: 'Shield', touchLight: 'Light', touchLotus: 'Lotus',
-    touchHands: 'Hold hands', touchSwitch: 'Switch character', touchHeart: 'Send a heart emote',
-    touchGuide: 'Left side: slide ◀ / ▶ to walk. 💗 sends a heart hello — it does not fill Love.',
+    touchHands: 'Hold hands', touchSwitch: 'Switch character', touchHeart: 'Send a heart emote', touchSpecial: 'Nón Lá special',
+    touchGuide: 'Left: slide to walk. Tap △ Nón Lá when its gold meter is ready. 💗 is only a friendly emote.',
+    spiritMonster: 'Restless spirit', spiritMagic: 'spirit magic', hatMastery: 'Nón Lá Mastery', bossPhase: 'Phase',
+    hatSkillName1: 'Golden Rim', hatSkillName2: 'Moon-River Return', hatSkillName3: 'Bamboo Gale Ring',
+    hatSkillName4: 'Lotus Halo', hatSkillName5: 'Bronze Dragon Seal', hatSkillName6: 'Twin-Star Tempest',
+    guardianName1: 'Lantern Alley Guardian', guardianName2: 'Moonwater Guardian', guardianName3: 'Bamboo Mask Guardian',
+    guardianName4: 'Lotus Mist Guardian', guardianName5: 'Bronze Drum Guardian', guardianName6: 'Festival Gate Guardian',
+    bossName1: 'Ashen Lantern Moth', bossName2: 'Moonwater Serpent', bossName3: 'Ancient Bamboo Shade',
+    bossName4: 'Lotus Eclipse Crane', bossName5: 'Corrupted Bronze Sentinel', bossName6: 'The Hollow Monsoon',
+    guardianAwakes: '⚔ {NAME} blocks the road — use Wind, Light and reflected magic!',
+    bossAwakes: '👑 {NAME} awakens with three forms of magic!', guardianPurified: 'Guardian purified — its light joins your nón lá.',
+    bossPurified: '✨ {NAME} is free from the cold wind!', hatMasteryUp: '△ Nón Lá Mastery {RANK} — {SKILL} unlocked!',
+    bossCastVolley: 'Fan of wandering flames', bossCastWave: 'Earth-running spirit wave',
+    bossCastRain: 'Falling sky seals — keep moving!', bossCastRing: 'Eight-direction magic ring',
+    questGuardian: 'Quest: purify {NAME}', questBoss: 'Quest: defeat {NAME}', questLanterns: 'Quest: light the remaining key lanterns',
+    questExit: 'Quest complete: reach the arch together', bossBlocksExit: 'The chapter boss still guards the way!',
+    hatNotReady: 'Nón Lá magic is recharging…', playerRevived: 'Lantern courage restored at the checkpoint 💛',
     lvName1: 'Hội An Lantern Street', lvName2: 'Moon River Boat Ride', lvName3: 'Bamboo Bridge Village',
     lvName4: 'Lotus Lake Promise', lvName5: 'Ancient Temple of Lanterns', lvName6: 'The Great Lantern Festival',
     costume_classic: 'Classic Festival Áo Dài', costume_flower: 'Nón Lá Flower', costume_lantern: 'Hội An Lantern',
@@ -113,16 +149,17 @@ NLA.I18N = {
     exitReady: 'The way is open — walk on together! ➜',
     fellWater: 'Splash! 💦', partnerSaved: 'saved you! +💗',
     helpKeys: `<h5>🕹 Keyboard — Player 1 (Boy · {BOY})</h5>
-<p><span class="kbd">A</span><span class="kbd">D</span> move · <span class="kbd">W</span> jump · <span class="kbd">E</span> wind power · <span class="kbd">Q</span> hold = shield</p>
+<p><span class="kbd">A</span><span class="kbd">D</span> move · <span class="kbd">W</span> jump · <span class="kbd">E</span> Wind Blade · <span class="kbd">Q</span> hold Shield · <span class="kbd">R</span> Nón Lá special</p>
 <h5>🕹 Keyboard — Player 2 (Girl · {GIRL})</h5>
-<p><span class="kbd">◀</span><span class="kbd">▶</span> move · <span class="kbd">▲</span> jump · <span class="kbd">O</span> light power · <span class="kbd">P</span> lotus platform</p>
+<p><span class="kbd">◀</span><span class="kbd">▶</span> move · <span class="kbd">▲</span> jump · <span class="kbd">O</span> Light Pulse · <span class="kbd">P</span> Lotus · <span class="kbd">I</span> Nón Lá special</p>
 <h5>💞 Together</h5>
 <p><span class="kbd">H</span> hold hands (stand close) · <span class="kbd">Tab</span> swap character (solo) · <span class="kbd">1</span><span class="kbd">2</span><span class="kbd">3</span> emotes · <span class="kbd">Esc</span> pause</p>
-<h5>🌀 {BOY} (boy)</h5><p>Wind moves lanterns, boats and crates. He can push heavy things, shield the couple, and channel a wind bridge on wind marks.</p>
-<h5>✨ {GIRL} (girl)</h5><p>Light wakes lanterns and opens gates. She heals broken things, grows lotus platforms on sparkling water, and her aura reveals the dark.</p>
-<h5>🏮 Goal</h5><p>Light the key lanterns of each chapter, grow your Love Meter by helping each other, then reach the festival arch together.</p>
+<h5>🌀 {BOY} (boy)</h5><p>Wind damages and pushes spirits, moves lanterns, boats and crates. Hold Shield to protect both players and reflect boss magic back at its caster.</p>
+<h5>✨ {GIRL} (girl)</h5><p>Light damages shadow spirits, wakes lanterns and heals broken things. Lotus creates safe platforms while her aura reveals the dark.</p>
+<h5>△ Nón Lá Mastery</h5><p>Purifying spirits grows shared Nón Lá Mastery through six Vietnamese-inspired skills. Use the special only when its gold energy bar is ready.</p>
+<h5>👑 Chapter quest</h5><p>Light key lanterns, purify the guardian, then defeat the chapter boss. Bosses have multiple phases: dodge marked attacks, reflect magic with Shield, and answer with Wind, Light and Nón Lá skills.</p>
 <h5>📱 Phones & touch controls</h5>
-<p>Put one thumb anywhere on the left side of the screen, then slide left or right to walk; lift it to stop. <span class="kbd">↑</span> jumps. The two labelled power buttons change for your character: {BOY} taps Wind and holds Shield; {GIRL} taps Light and Lotus.</p>
+<p>Put one thumb anywhere on the left side, slide to walk and lift it to stop. <span class="kbd">↑</span> jumps. The labelled powers change with your character. Tap <span class="kbd">△</span> for Nón Lá magic when its gold meter is full.</p>
 <p><span class="kbd">🤝</span> toggles holding hands when you stand close. <span class="kbd">🔄</span> swaps character in solo play. <span class="kbd">💗</span> sends a friendly heart emote only — it does not add Love.</p>
 <p>For two people on phones, use “Play Online Together”.</p>
 <h5>💗 Love icons</h5><p>The heart above the centre lantern is the Love Meter. Help each other, light key lanterns and collect both matching heart lanterns to grow it; every pair gives +5 Love. Its five levels unlock co-op benefits such as safer hand-holding, brighter shared light, a stronger shield and a joint wind jump.</p>`,
@@ -132,12 +169,12 @@ NLA.I18N = {
       'But one night, a strange cold wind swept the town…\nand carried every flame far away.\nThe town lost its color. The river lost its song.',
       '{BOY} and {GIRL} — two young hearts with magical nón lá —\npromised each other one thing:\n“Together, we will bring the light home.” 💞',
     ],
-    lvIntro1: 'Chapter 1 — Lantern Street\nThe old yellow houses sleep in grey. Let’s wake the first lanterns… together.',
-    lvIntro2: 'Chapter 2 — Moon River\nA little wooden boat waits on the Thu Bồn river. The moon will watch over us.',
-    lvIntro3: 'Chapter 3 — Bamboo Village\nThe village is preparing the festival, but the bridges are broken. Let’s help everyone.',
-    lvIntro4: 'Chapter 4 — Lotus Lake\nUnder the biggest moon, the lotus lake sleeps. Shadow birds circle above… stay close to me.',
-    lvIntro5: 'Chapter 5 — Ancient Temple\nThe old temple keeps the deepest flame. Its gates only trust those who trust each other.',
-    lvIntro6: 'Final Chapter — The Great Lantern Festival\nThe whole town is dark. One giant lantern remains. Everything we learned… it was for tonight.',
+    lvIntro1: 'Chapter 1 — Lantern Street\nRestore the lanterns, learn your Nón Lá magic, purify the alley guardian, then face the Ashen Lantern Moth.',
+    lvIntro2: 'Chapter 2 — Moon River\nSail the Thu Bồn river, light the floating candles and master Moon-River Return before the serpent wakes.',
+    lvIntro3: 'Chapter 3 — Bamboo Village\nRepair the village, protect its people and let the bamboo teach your spinning hat a stronger gale.',
+    lvIntro4: 'Chapter 4 — Lotus Lake\nCross the moonlit water, shield each other from shadow birds and challenge the Lotus Eclipse Crane.',
+    lvIntro5: 'Chapter 5 — Ancient Temple\nRead the bronze seals, combine Wind and Light, and free the temple sentinel from corruption.',
+    lvIntro6: 'Final Chapter — The Great Lantern Festival\nEverything you learned leads here. Purify the final guardian and survive the Hollow Monsoon’s three phases.',
     memories: [
       'The first time we met, it rained over the old bridge.\nYou shared your nón lá with me,\nand we both got wet anyway. We laughed so hard. ☔',
       'You bought two bowls of cao lầu,\nand gave me all your crispy pork.\nI knew right then. 🍜',
@@ -163,17 +200,21 @@ NLA.I18N = {
     playSolo: 'Chơi một mình', local2p: '2 người · Một bàn phím', online: 'Chơi Online cùng nhau 💞',
     wardrobe: 'Tủ đồ', howto: 'Cách chơi', back: 'Quay lại', select: 'Chọn',
     menuFoot: 'Một chuyện cổ tích Việt Nam ấm áp về tình yêu và ánh sáng ✨',
-    pickChar: 'Chọn nhân vật của bạn', boyDesc: 'Gió · Khiên · Sức mạnh', girlDesc: 'Ánh sáng · Hoa sen · Chữa lành',
+    pickChar: 'Chọn nhân vật của bạn', boyDesc: 'Đao gió · Khiên phản phép · Phép Nón Lá', girlDesc: 'Xung ánh sáng · Sen chữa lành · Phép Nón Lá',
     soloHint: 'Người ấy sẽ đi theo bạn — nhấn Tab / 🔄 để đổi vai bất cứ lúc nào.',
     chooseLevel: 'Chọn chương',
     onlineTitle: 'Chơi Online cùng nhau 💞',
-    onlineHint: 'Một người tạo phòng, người kia nhập mã 4 chữ để vào. Chơi được trên điện thoại và máy tính, ở bất cứ đâu!',
+    onlineHint: 'Một người tạo phòng và gửi mã 4 chữ. Kết nối trực tiếp hoạt động toàn cầu; TURN relay đã cấu hình sẽ giúp vượt qua mạng di động hoặc bộ định tuyến nghiêm ngặt.',
     onlinePickHint: 'Chọn nhân vật BẠN muốn chơi — người ấy sẽ nhận nhân vật còn lại.',
     hostGame: 'Tạo phòng 💌', joinGame: 'Vào', shareCode: 'Gửi mã này cho người ấy:',
-    loadingOnline: 'Đang chuẩn bị chơi online…', connecting: 'Đang thắp đèn kết nối…', waitingPartner: 'Đang chờ người ấy vào phòng…',
-    partnerJoined: 'Người ấy đến rồi! 💗 Bắt đầu…', joinFail: 'Không tìm thấy phòng. Kiểm tra lại mã nhé?',
+    loadingOnline: 'Đang chuẩn bị kết nối toàn cầu…', connecting: 'Đang tìm đường kết nối qua thế giới…', waitingPartner: 'Phòng đã sẵn sàng — đang chờ người ấy…',
+    partnerJoined: 'Người ấy đến rồi! 💗 Bắt đầu…', joinFail: 'Không thể kết nối tới phòng. Kiểm tra mã, giữ trang của chủ phòng mở rồi thử lại.',
     netLost: 'Kết nối bay theo gió mất rồi 🌬 — đèn lồng sẽ dẫn lối cho người ấy.',
     needPeer: 'Chơi online cần Internet (không tải được PeerJS).',
+    relayReady: '🌏 Relay toàn cầu đã sẵn sàng — mạng nghiêm ngặt vẫn kết nối được.',
+    relayMissing: '⚠ Hiện chỉ có kết nối trực tiếp. Hãy thêm TURN relay trước khi chơi xuyên quốc gia để ổn định.',
+    retryingOnline: 'Đường đầu tiên bị chặn — đang thử một đường khác…',
+    connectedDirect: 'Đã kết nối trực tiếp qua thế giới 💞', connectedRelay: 'Đã kết nối qua relay toàn cầu 💞',
     paused: 'Tạm dừng 🌙', resume: 'Chơi tiếp', restart: 'Chơi lại chương', backToMenu: 'Về menu',
     continue: 'Tiếp tục ➜', keepGoing: 'Giữ mãi trong tim 💗',
     memoryTitle: 'Một ký ức ấm áp trở về…',
@@ -183,8 +224,23 @@ NLA.I18N = {
     charmsOwned: 'Bùa đã thu thập', rotate: 'Hãy xoay ngang điện thoại nhé 💛',
     touchMoveLeft: 'Đi sang trái', touchMoveRight: 'Đi sang phải', touchJump: 'Nhảy',
     touchWind: 'Gió', touchShield: 'Khiên', touchLight: 'Ánh sáng', touchLotus: 'Hoa sen',
-    touchHands: 'Nắm tay', touchSwitch: 'Đổi vai', touchHeart: 'Gửi biểu tượng tim',
-    touchGuide: 'Bên trái: kéo ◀ / ▶ để đi. 💗 chỉ gửi lời chào bằng tim — không tăng Tình Yêu.',
+    touchHands: 'Nắm tay', touchSwitch: 'Đổi vai', touchHeart: 'Gửi biểu tượng tim', touchSpecial: 'Tuyệt kỹ Nón Lá',
+    touchGuide: 'Bên trái: kéo để đi. Chạm △ Nón Lá khi thanh vàng đầy. 💗 chỉ là biểu tượng thân thiện.',
+    spiritMonster: 'Linh hồn lạc lối', spiritMagic: 'linh thuật', hatMastery: 'Tinh thông Nón Lá', bossPhase: 'Giai đoạn',
+    hatSkillName1: 'Viền Vàng', hatSkillName2: 'Trăng Sông Hồi Quy', hatSkillName3: 'Vòng Gió Tre',
+    hatSkillName4: 'Hào Quang Hoa Sen', hatSkillName5: 'Ấn Rồng Trống Đồng', hatSkillName6: 'Bão Song Tinh',
+    guardianName1: 'Hộ Vệ Hẻm Đèn', guardianName2: 'Hộ Vệ Thủy Nguyệt', guardianName3: 'Hộ Vệ Mặt Nạ Tre',
+    guardianName4: 'Hộ Vệ Sương Sen', guardianName5: 'Hộ Vệ Trống Đồng', guardianName6: 'Hộ Vệ Cổng Lễ Hội',
+    bossName1: 'Bướm Đèn Tro Tàn', bossName2: 'Giao Long Thủy Nguyệt', bossName3: 'Bóng Tre Ngàn Năm',
+    bossName4: 'Hạc Sen Nguyệt Thực', bossName5: 'Vệ Thần Trống Đồng Sa Ngã', bossName6: 'Bão Rỗng Hắc Phong',
+    guardianAwakes: '⚔ {NAME} chặn đường — dùng Gió, Ánh sáng và phản lại phép!',
+    bossAwakes: '👑 {NAME} thức tỉnh với ba loại phép!', guardianPurified: 'Đã thanh tẩy hộ vệ — ánh sáng hòa vào nón lá.',
+    bossPurified: '✨ {NAME} đã được giải thoát khỏi gió lạnh!', hatMasteryUp: '△ Tinh thông Nón Lá {RANK} — mở khóa {SKILL}!',
+    bossCastVolley: 'Quạt lửa lang thang', bossCastWave: 'Linh lực chạy dọc mặt đất',
+    bossCastRain: 'Ấn trời rơi — tiếp tục di chuyển!', bossCastRing: 'Vòng phép tám hướng',
+    questGuardian: 'Nhiệm vụ: thanh tẩy {NAME}', questBoss: 'Nhiệm vụ: đánh bại {NAME}', questLanterns: 'Nhiệm vụ: thắp những đèn chính còn lại',
+    questExit: 'Hoàn thành: cùng nhau đến cổng', bossBlocksExit: 'Trùm chương vẫn đang canh giữ lối đi!',
+    hatNotReady: 'Phép Nón Lá đang hồi phục…', playerRevived: 'Dũng khí đèn lồng hồi phục tại điểm lưu 💛',
     lvName1: 'Phố Đèn Lồng Hội An', lvName2: 'Thuyền Trăng Sông Thu Bồn', lvName3: 'Làng Cầu Tre',
     lvName4: 'Lời Hứa Hồ Sen', lvName5: 'Cổ Tự Đèn Lồng', lvName6: 'Đại Lễ Hội Đèn Lồng',
     costume_classic: 'Áo dài lễ hội cổ điển', costume_flower: 'Nón lá cài hoa', costume_lantern: 'Đèn lồng Hội An',
@@ -216,16 +272,17 @@ NLA.I18N = {
     exitReady: 'Đường đã mở — cùng nhau đi tiếp nào! ➜',
     fellWater: 'Ùm! 💦', partnerSaved: 'đã cứu bạn! +💗',
     helpKeys: `<h5>🕹 Bàn phím — Người chơi 1 ({BOY})</h5>
-<p><span class="kbd">A</span><span class="kbd">D</span> di chuyển · <span class="kbd">W</span> nhảy · <span class="kbd">E</span> phép gió · <span class="kbd">Q</span> giữ = khiên</p>
+<p><span class="kbd">A</span><span class="kbd">D</span> di chuyển · <span class="kbd">W</span> nhảy · <span class="kbd">E</span> Đao Gió · <span class="kbd">Q</span> giữ Khiên · <span class="kbd">R</span> tuyệt kỹ Nón Lá</p>
 <h5>🕹 Bàn phím — Người chơi 2 ({GIRL})</h5>
-<p><span class="kbd">◀</span><span class="kbd">▶</span> di chuyển · <span class="kbd">▲</span> nhảy · <span class="kbd">O</span> phép ánh sáng · <span class="kbd">P</span> bệ hoa sen</p>
+<p><span class="kbd">◀</span><span class="kbd">▶</span> di chuyển · <span class="kbd">▲</span> nhảy · <span class="kbd">O</span> Xung Ánh Sáng · <span class="kbd">P</span> Hoa Sen · <span class="kbd">I</span> tuyệt kỹ Nón Lá</p>
 <h5>💞 Cùng nhau</h5>
 <p><span class="kbd">H</span> nắm tay (đứng gần) · <span class="kbd">Tab</span> đổi vai (chơi một mình) · <span class="kbd">1</span><span class="kbd">2</span><span class="kbd">3</span> biểu cảm · <span class="kbd">Esc</span> tạm dừng</p>
-<h5>🌀 {BOY}</h5><p>Gió đẩy đèn lồng, thuyền và thùng gỗ. Chàng đẩy được vật nặng, che khiên cho cả hai, và tạo cầu gió trên dấu gió.</p>
-<h5>✨ {GIRL}</h5><p>Ánh sáng đánh thức đèn lồng và mở cổng. Nàng chữa lành đồ vỡ, mọc bệ hoa sen trên nước lấp lánh, và hào quang soi rõ bóng tối.</p>
-<h5>🏮 Mục tiêu</h5><p>Thắp các đèn lồng chính của mỗi chương, nuôi lớn Thang Tình Yêu bằng cách giúp đỡ nhau, rồi cùng đến cổng lễ hội.</p>
+<h5>🌀 {BOY}</h5><p>Gió gây sát thương và đẩy linh hồn, đồng thời đẩy đèn lồng, thuyền và thùng gỗ. Giữ Khiên để bảo vệ cả hai và phản phép trùm.</p>
+<h5>✨ {GIRL}</h5><p>Ánh sáng gây sát thương bóng tối, thắp đèn và chữa lành đồ vỡ. Hoa Sen tạo bệ an toàn và hào quang soi rõ bóng tối.</p>
+<h5>△ Tinh thông Nón Lá</h5><p>Thanh tẩy linh hồn giúp tuyệt kỹ Nón Lá phát triển qua sáu cấp lấy cảm hứng Việt Nam. Chỉ dùng được khi thanh năng lượng vàng đã đầy.</p>
+<h5>👑 Nhiệm vụ chương</h5><p>Thắp đèn chính, thanh tẩy hộ vệ rồi đánh bại trùm chương. Hãy né vùng cảnh báo, dùng Khiên phản phép, sau đó đáp trả bằng Gió, Ánh sáng và Nón Lá.</p>
 <h5>📱 Điện thoại & cảm ứng</h5>
-<p>Đặt một ngón tay ở bất kỳ đâu bên trái màn hình, rồi kéo sang trái hoặc phải để đi; nhấc tay để dừng. <span class="kbd">↑</span> để nhảy. Hai nút phép có nhãn sẽ đổi theo nhân vật: {BOY} chạm Gió và GIỮ Khiên; {GIRL} chạm Ánh sáng và Hoa sen.</p>
+<p>Đặt ngón tay ở bất kỳ đâu bên trái, kéo để đi và nhấc tay để dừng. <span class="kbd">↑</span> để nhảy. Các nút phép đổi theo nhân vật. Chạm <span class="kbd">△</span> để dùng Nón Lá khi thanh vàng đầy.</p>
 <p><span class="kbd">🤝</span> bật/tắt nắm tay khi đứng gần nhau. <span class="kbd">🔄</span> đổi nhân vật khi chơi một mình. <span class="kbd">💗</span> chỉ gửi biểu tượng trái tim thân thiện — không tăng Tình Yêu.</p>
 <p>Hai người chơi trên điện thoại hãy dùng “Chơi Online cùng nhau”.</p>
 <h5>💗 Biểu tượng Tình Yêu</h5><p>Trái tim trên chiếc đèn giữa màn hình là Thang Tình Yêu. Hãy giúp nhau, thắp đèn chính và nhặt đủ hai đèn tim cùng cặp để tăng thang; mỗi cặp được +5 Tình Yêu. Năm cấp sẽ mở lợi ích phối hợp như nắm tay an toàn hơn, ánh sáng chung sáng hơn, khiên mạnh hơn và cú nhảy gió cùng nhau.</p>`,
@@ -235,12 +292,12 @@ NLA.I18N = {
       'Nhưng một đêm nọ, cơn gió lạ lạnh lẽo quét qua phố…\ncuốn hết mọi ngọn lửa bay đi xa.\nPhố mất màu. Dòng sông quên tiếng hát.',
       '{BOY} và {GIRL} — hai trái tim trẻ với nón lá nhiệm màu —\nđã hứa với nhau một điều:\n“Cùng nhau, mình sẽ đưa ánh sáng về nhà.” 💞',
     ],
-    lvIntro1: 'Chương 1 — Phố Đèn Lồng\nNhững ngôi nhà vàng cổ đang ngủ trong màu xám. Cùng nhau thắp những chiếc đèn đầu tiên nhé.',
-    lvIntro2: 'Chương 2 — Sông Trăng\nMột chiếc thuyền gỗ nhỏ đợi trên sông Thu Bồn. Ánh trăng sẽ dõi theo đôi mình.',
-    lvIntro3: 'Chương 3 — Làng Tre\nLàng đang chuẩn bị lễ hội, nhưng những cây cầu đã gãy. Mình giúp mọi người nào.',
-    lvIntro4: 'Chương 4 — Hồ Sen\nDưới vầng trăng lớn nhất, hồ sen đang ngủ. Chim bóng tối lượn trên cao… ở gần em nhé.',
-    lvIntro5: 'Chương 5 — Cổ Tự\nNgôi chùa cổ giữ ngọn lửa sâu thẳm nhất. Cổng chùa chỉ tin những ai biết tin nhau.',
-    lvIntro6: 'Chương cuối — Đại Lễ Hội Đèn Lồng\nCả phố chìm trong bóng tối. Chỉ còn một chiếc đèn lồng khổng lồ. Mọi điều mình học… là để dành cho đêm nay.',
+    lvIntro1: 'Chương 1 — Phố Đèn Lồng\nThắp lại đèn, học phép Nón Lá, thanh tẩy hộ vệ con hẻm rồi đối đầu Bướm Đèn Tro Tàn.',
+    lvIntro2: 'Chương 2 — Sông Trăng\nChèo qua sông Thu Bồn, thắp nến nổi và làm chủ Trăng Sông Hồi Quy trước khi giao long thức giấc.',
+    lvIntro3: 'Chương 3 — Làng Tre\nSửa lại ngôi làng, bảo vệ mọi người và để tre dạy chiếc nón xoay thành vòng gió mạnh hơn.',
+    lvIntro4: 'Chương 4 — Hồ Sen\nBăng qua mặt nước trăng, che chắn nhau khỏi chim bóng tối và thách đấu Hạc Sen Nguyệt Thực.',
+    lvIntro5: 'Chương 5 — Cổ Tự\nĐọc những ấn trống đồng, phối hợp Gió với Ánh sáng và giải thoát vệ thần cổ tự.',
+    lvIntro6: 'Chương cuối — Đại Lễ Hội Đèn Lồng\nMọi kỹ năng đều dẫn đến đây. Thanh tẩy hộ vệ cuối và sống sót qua ba giai đoạn của Bão Rỗng Hắc Phong.',
     memories: [
       'Lần đầu mình gặp nhau, mưa rơi trên cây cầu cổ.\nAnh che nón lá cho em,\nrồi cả hai vẫn ướt hết. Mình cười mãi thôi. ☔',
       'Anh mua hai tô cao lầu,\nrồi nhường em hết phần da heo giòn.\nEm biết ngay từ lúc đó. 🍜',
@@ -278,6 +335,7 @@ NLA.save = {
     if (typeof d.costumeBoy !== 'string') d.costumeBoy = 'classic';
     if (typeof d.costumeGirl !== 'string') d.costumeGirl = 'classic';
     if (typeof d.finished !== 'boolean') d.finished = false;
+    if (typeof d.hatXP !== 'number' || d.hatXP < 0) d.hatXP = 0;
     if (typeof d.nameBoy !== 'string' || !d.nameBoy.trim()) d.nameBoy = 'Joku';
     if (typeof d.nameGirl !== 'string' || !d.nameGirl.trim()) d.nameGirl = 'Jolie';
     return d;
@@ -286,6 +344,15 @@ NLA.save = {
 };
 
 NLA.lang = () => NLA.I18N[NLA.save.data && NLA.save.data.lang || 'en'];
+
+NLA.hatRank = () => {
+  const xp = Math.max(0, Number(NLA.save.data && NLA.save.data.hatXP) || 0);
+  let rank = 1;
+  for (let i = 1; i < NLA.CONST.HAT_XP_LEVELS.length; i++) {
+    if (xp >= NLA.CONST.HAT_XP_LEVELS[i]) rank = i + 1;
+  }
+  return Math.min(6, rank);
+};
 
 /* character names (default Joku & Jolie, players can rename) */
 NLA.name = (who) => {

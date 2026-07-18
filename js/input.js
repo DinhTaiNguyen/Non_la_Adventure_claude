@@ -1,6 +1,6 @@
 /* =====================================================================
    input.js — keyboard + touch input, mapped to two virtual controllers
-   Controller: { left, right, jump, pow1, pow2, hands }  (held booleans)
+   Controller: { left, right, jump, pow1, pow2, special, hands }
    Edge presses are computed in game via prev-state comparison.
    ===================================================================== */
 (function () {
@@ -11,7 +11,7 @@
   let movementStick = null;
   const I = {
     keys,
-    touch: { left: false, right: false, jump: false, pow1: false, pow2: false },
+    touch: { left: false, right: false, jump: false, pow1: false, pow2: false, special: false },
     swapPressed: false, emotePressed: 0, handsPressedTouch: false,
     isTouchDevice: ('ontouchstart' in window) || (navigator.maxTouchPoints > 0),
   };
@@ -71,7 +71,7 @@
 
   function resetTouch() {
     const t = I.touch;
-    t.left = t.right = t.jump = t.pow1 = t.pow2 = false;
+    t.left = t.right = t.jump = t.pow1 = t.pow2 = t.special = false;
     resetMovement();
     I.swapPressed = false;
     I.emotePressed = 0;
@@ -91,6 +91,7 @@
       left: !!keys.KeyA, right: !!keys.KeyD,
       jump: !!(keys.KeyW || keys.Space),
       pow1: !!keys.KeyE, pow2: !!keys.KeyQ,
+      special: !!keys.KeyR,
       hands: !!keys.KeyH,
     };
   };
@@ -99,6 +100,7 @@
       left: !!keys.ArrowLeft, right: !!keys.ArrowRight,
       jump: !!keys.ArrowUp,
       pow1: !!(keys.KeyO || keys.Comma), pow2: !!(keys.KeyP || keys.Period),
+      special: !!keys.KeyI,
       hands: !!keys.KeyH,
     };
   };
@@ -111,6 +113,7 @@
       jump: !!(keys.KeyW || keys.ArrowUp || keys.Space || t.jump),
       pow1: !!(keys.KeyE || keys.KeyO || t.pow1),
       pow2: !!(keys.KeyQ || keys.KeyP || t.pow2),
+      special: !!(keys.KeyR || keys.KeyI || t.special),
       hands: !!keys.KeyH,
     };
   };
@@ -210,6 +213,7 @@
     bindHeld('tc-jump-btn', 'jump');
     bindHeld('tc-pow1-btn', 'pow1');
     bindHeld('tc-pow2-btn', 'pow2');
+    bindHeld('tc-special-btn', 'special');
 
     const tap = (id, fn) => {
       const el = document.getElementById(id);

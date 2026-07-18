@@ -344,6 +344,33 @@
       SFX.sparkle();
     },
     hurt() { const c = A.ctx; if (!c) return; const o = c.createOscillator(); o.type = 'square'; o.frequency.setValueAtTime(220, c.currentTime); o.frequency.exponentialRampToValueAtTime(110, c.currentTime + 0.18); const g = sfxEnv(0.2, 0.08); o.connect(g); o.start(); o.stop(c.currentTime + 0.22); },
+    bossRoar() {
+      const c = A.ctx; if (!c) return;
+      const o = c.createOscillator(); o.type = 'sawtooth';
+      o.frequency.setValueAtTime(92, c.currentTime); o.frequency.exponentialRampToValueAtTime(46, c.currentTime + .8);
+      const g = sfxEnv(.9, .18); o.connect(g); o.start(); o.stop(c.currentTime + .95);
+      const n = noiseSrc(c.currentTime, .8); const f = c.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 260;
+      const ng = sfxEnv(.8, .16); n.connect(f); f.connect(ng);
+    },
+    bossCast() {
+      const c = A.ctx; if (!c) return;
+      const o = c.createOscillator(); o.type = 'triangle';
+      o.frequency.setValueAtTime(180, c.currentTime); o.frequency.exponentialRampToValueAtTime(760, c.currentTime + .34);
+      const g = sfxEnv(.48, .12); o.connect(g); o.start(); o.stop(c.currentTime + .5);
+    },
+    bossHit() { SFX.hurt(); SFX.sparkle(); },
+    bossDown() { SFX.firework(); SFX.loveUp(); SFX.bell(); },
+    shieldReflect() { SFX.shieldOn(); SFX.chime(4); },
+    hatSkill() {
+      const c = A.ctx; if (!c) return;
+      [0, 4, 7].forEach((step, i) => {
+        const o = c.createOscillator(); o.type = i === 0 ? 'triangle' : 'sine';
+        o.frequency.setValueAtTime(SCALE[Math.min(SCALE.length - 1, 7 + step)], c.currentTime + i * .035);
+        o.frequency.exponentialRampToValueAtTime(SCALE[Math.min(SCALE.length - 1, 11 + Math.min(step, 4))], c.currentTime + .42);
+        const g = sfxEnv(.55, .11 / (i + 1)); o.connect(g); o.start(c.currentTime + i * .035); o.stop(c.currentTime + .6);
+      });
+      SFX.wind();
+    },
     dispel() {
       const c = A.ctx; if (!c) return;
       const o = c.createOscillator(); o.type = 'sine';

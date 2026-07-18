@@ -17,7 +17,9 @@
       this.coyote = 0; this.jumpBuf = 0; this.jumpHeld = false;
       this.walkPhase = 0; this.blinkT = Math.random() * 3;
       this.landT = 0; this.stun = 0; this.dim = 0;
+      this.maxHp = 4; this.hp = this.maxHp; this.invuln = 0;
       this.cd1 = 0; this.cd2 = 0;
+      this.hatEnergy = 100; this.hatCd = 0;
       this.shieldMeter = C.SHIELD_MAX; this.shieldOn = false;
       this.channel = false;           /* wind bridge channeling */
       this.channelLight = false;      /* finale channel */
@@ -38,8 +40,11 @@
       this.landT = Math.max(0, this.landT - dt * 4);
       this.stun = Math.max(0, this.stun - dt);
       this.dim = Math.max(0, this.dim - dt);
+      this.invuln = Math.max(0, this.invuln - dt);
       this.cd1 = Math.max(0, this.cd1 - dt);
       this.cd2 = Math.max(0, this.cd2 - dt);
+      this.hatCd = Math.max(0, this.hatCd - dt);
+      this.hatEnergy = Math.min(100, this.hatEnergy + C.HAT_SPECIAL_REGEN * dt);
       this.powerFx = Math.max(0, this.powerFx - dt * 2);
       this.emoteT = Math.max(0, this.emoteT - dt);
       this.wings = Math.max(0, this.wings - dt * 1.2);
@@ -75,7 +80,7 @@
       this.vy = Math.min(1300, this.vy + C.GRAVITY * dt);
 
       this.moveAndCollide(dt, world);
-      this.prev = { jump: !!c.jump, pow1: !!c.pow1, pow2: !!c.pow2, hands: !!c.hands };
+      this.prev = { jump: !!c.jump, pow1: !!c.pow1, pow2: !!c.pow2, special: !!c.special, hands: !!c.hands };
     }
 
     updateRemote(dt) {
@@ -93,6 +98,8 @@
         this.shieldOn = this.netTarget.shieldOn;
         this.channel = this.netTarget.channel;
         this.channelLight = this.netTarget.channelLight;
+        if (Number.isFinite(this.netTarget.hp)) this.hp = this.netTarget.hp;
+        if (Number.isFinite(this.netTarget.hatEnergy)) this.hatEnergy = this.netTarget.hatEnergy;
       }
     }
 

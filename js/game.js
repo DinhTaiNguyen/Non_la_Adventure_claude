@@ -137,6 +137,7 @@
         this.byId[inst.id] = inst;
         return inst;
       });
+      this.combat = NLA.combat && NLA.combat.create(idx, lv);
 
       this.staticSolids = lv.platforms.map(p => ({ x: p.x, y: p.y, w: p.w, h: p.h, oneWay: !!p.oneWay, type: p.type }));
       this.solids = [];
@@ -164,6 +165,36 @@
       if (!b || !b.shieldOn) return false;
       const r = this.loveLevel >= 3 ? 130 : 96;
       return U.dist(x, y, b.x, b.y - 40) < r;
+    }
+    damagePlayer(pl, amount, knockX, knockY, source, fromNet) {
+      if (!pl || this.state !== 'play' || pl.invuln > 0) return false;
+      if (!fromNet && this.net.active && !this.net.isHost) return false;
+      pl.hp = Math.max(0, pl.hp - Math.max(1, amount || 1));
+      pl.invuln = 1.15;
+      pl.stun = Math.max(pl.stun, .62);
+      pl.dim = Math.max(pl.dim, .35);
+      if (!pl.remote || fromNet) {
+        pl.vx = knockX || 0;
+        pl.vy = knockY || -210;
+      }
+      NLA.audio.sfx('hurt');
+      P().burst(pl.x, pl.y - 38, 12, { kind: 'spark', color: '#ff829f', glow: 'pink', speed: 110, life: .65, size: 3 });
+      let revived = false;
+      if (pl.hp <= 0) {
+        revived = true;
+        pl.hp = pl.maxHp;
+        pl.x = this.checkpointX + (pl.who === 'boy' ? -24 : 24);
+        pl.y = this.level.groundY - 4;
+        pl.vx = pl.vy = 0;
+        pl.hatEnergy = Math.max(pl.hatEnergy, 55);
+        pl.invuln = 2;
+        NLA.ui.toast(NLA.t('playerRevived'));
+      }
+      if (!fromNet) this.emitEvent('combatHit', {
+        who: pl.who, hp: pl.hp, x: pl.x, y: pl.y, vx: pl.vx, vy: pl.vy,
+        source: String(source || '').slice(0, 40), revived,
+      });
+      return true;
     }
     emitEvent(kind, data) {
       if (this._suppress) return;
@@ -222,6 +253,10 @@
     }
     finale() {
       if (this.endingT >= 0) return;
+      if (this.combat && !this.combat.finalDefeated()) {
+        NLA.ui.toast(NLA.t('bossBlocksExit'), 2800);
+        return;
+      }
       this.state = 'ending';
       this.cutscene = true;
       this.endingT = 0;
@@ -302,6 +337,16 @@
           if (danger && pl.shieldMeter > 1) c.pow2 = true;
         }
       }
+      /* solo companion helps in fights and saves a charged Nón Lá strike
+         for guardians or groups of nearby spirits. */
+      if (this.combat) {
+        const threats = this.combat.enemies.filter(e => !e.dead && U.dist(pl.x, pl.y - 30, e.x, e.y) < 300);
+        if (threats.length) {
+          if (pl.who === 'girl' && pl.cd1 <= 0) c.pow1 = true;
+          if (pl.who === 'boy' && pl.cd1 <= 0 && !c.pow2) c.pow1 = true;
+          if (pl.hatEnergy >= C.HAT_SPECIAL_COST && (threats.length > 1 || threats.some(e => e.role !== 'mob'))) c.special = true;
+        }
+      }
       return c;
     }
 
@@ -343,6 +388,7 @@
         if (w instanceof E.Wisp && !w.gone && U.dist(x, y, w.x, w.y) < radius + 24) w.dispel(this);
         if (w instanceof E.BirdZone) w.lightStun(x, y, radius);
       }
+      if (this.combat) this.combat.hitCircle(x, y, radius, 10 + NLA.hatRank() * 1.5, this, 'light');
       this._suppress = false;
     }
 
@@ -371,6 +417,7 @@
           w.x += dir * 50;
         }
       }
+      if (this.combat) this.combat.hitCone(x, y, dir, C.GUST_RANGE + 30, 155, 8 + NLA.hatRank(), this, 'wind');
       this._suppress = false;
     }
 
@@ -400,7 +447,18 @@
       pl.holdingPow1 = !!ctrl.pow1;
       const press1 = ctrl.pow1 && !pl.prevP1;
       const press2 = ctrl.pow2 && !pl.prevP2;
-      pl.prevP1 = !!ctrl.pow1; pl.prevP2 = !!ctrl.pow2;
+      const pressSpecial = ctrl.special && !pl.prevSpecial;
+      pl.prevP1 = !!ctrl.pow1; pl.prevP2 = !!ctrl.pow2; pl.prevSpecial = !!ctrl.special;
+
+      if (pressSpecial && this.combat) {
+        if (pl.hatEnergy >= C.HAT_SPECIAL_COST && pl.hatCd <= 0) {
+          pl.hatEnergy -= C.HAT_SPECIAL_COST;
+          pl.hatCd = .45;
+          this.combat.useHatSkill(pl, this, { x: pl.x, y: pl.y - 46, dir: pl.face, rank: NLA.hatRank() }, false);
+        } else if ((this.mode !== 'solo' || pl.who === this.activeChar) && !pl.remote) {
+          NLA.ui.toast(NLA.t('hatNotReady'), 1400);
+        }
+      }
 
       /* near a windmark or big-lantern pedestal, pow1 = channel (handled by objects) */
       const nearMark = this.objects.some(o =>
@@ -549,6 +607,7 @@
           if (s) this.solids.push(s);
         }
       }
+      if (this.combat) this.combat.addSolids(this.solids);
 
       /* carry players on moving platforms (boat & lotus bob) */
       for (const pl of this.players) {
@@ -614,6 +673,7 @@
       /* objects & enemies */
       for (const o of this.objects) o.update && o.update(dt, this);
       for (const e of this.enemies) e.update(dt, this);
+      if (this.combat) this.combat.update(dt, this);
       for (const c of this.collectibles) c.update(dt, this);
 
       /* guest: apply gentle correction toward host snapshot */
@@ -633,6 +693,7 @@
           const boat = this.objects.find(o => o instanceof E.Boat);
           if (boat) boat.x = U.lerp(boat.x, s.boat, 0.12);
         }
+        if (this.combat && s.combat) this.combat.applySnapshot(s.combat, this);
       }
 
       /* net sync own player */
@@ -705,8 +766,13 @@
       const [a, b] = this.players;
       const inZone = (p) => Math.abs(p.x - ex.x) < 80;
       if (inZone(a) && inZone(b)) {
-        if (this.keyLit >= this.level.required) {
+        if (this.keyLit >= this.level.required && (!this.combat || this.combat.finalDefeated())) {
           this.completeLevel();
+        } else if (this.combat && !this.combat.finalDefeated()) {
+          if (!this._bossExitTip || this.t - this._bossExitTip > 2.2) {
+            this._bossExitTip = this.t;
+            NLA.ui.toast(NLA.t('bossBlocksExit'), 1800);
+          }
         }
       }
     }
@@ -808,7 +874,7 @@
         if (o instanceof E.Box) boxes.push([Math.round(o.x), Math.round(o.y)]);
         if (o instanceof E.Boat) boat = Math.round(o.x);
       }
-      this.net.send({ t: 'snap', d: { boxes, boat } });
+      this.net.send({ t: 'snap', d: { boxes, boat, combat: this.combat ? this.combat.snapshot() : null } });
       /* love authoritative from host */
       this.net.send({ t: 'love', v: this.love });
     }
@@ -871,6 +937,27 @@
             if (bb && bb.state === 'idle') { bb.state = 'shake'; bb.timer = 0.8; }
             break;
           }
+          case 'combatCast': if (this.combat) this.combat.applyCast(d, this); break;
+          case 'hatSkill': {
+            const fighter = this.players.find(p => p.who === d.who);
+            if (fighter && this.combat) this.combat.useHatSkill(fighter, this, d, true);
+            break;
+          }
+          case 'combatHit': {
+            const hurt = this.players.find(p => p.who === d.who);
+            if (hurt) {
+              hurt.hp = Number.isFinite(d.hp) ? d.hp : hurt.hp;
+              hurt.invuln = d.revived ? 2 : 1.15;
+              hurt.stun = d.revived ? 0 : .62;
+              if (Number.isFinite(d.x)) hurt.x = d.x;
+              if (Number.isFinite(d.y)) hurt.y = d.y;
+              if (Number.isFinite(d.vx)) hurt.vx = d.vx;
+              if (Number.isFinite(d.vy)) hurt.vy = d.vy;
+              NLA.audio.sfx('hurt');
+            }
+            break;
+          }
+          case 'combatReward': if (this.combat) this.combat.receiveReward(d.id, d.xp, d.role, this); break;
           case 'complete': this.completeLevel(); break;
           case 'finale': this.finale(); break;
         }
@@ -998,6 +1085,7 @@
 
       /* enemies above players */
       for (const e of this.enemies) if (inDrawRange(e)) e.draw(ctx, t);
+      if (this.combat) this.combat.draw(ctx, t, this);
 
       /* world particles */
       P().draw(ctx, 0, 0, 0);
@@ -1142,7 +1230,7 @@
     }
 
     drawExit(ctx, x, gy, t) {
-      const ready = this.keyLit >= this.level.required;
+      const ready = this.keyLit >= this.level.required && (!this.combat || this.combat.finalDefeated());
       ctx.save();
       /* festival arch */
       ctx.strokeStyle = '#8e2f31';
@@ -1239,6 +1327,10 @@
       for (const pt of P().list) {
         if (pt.kind === 'firefly') hole(pt.x, pt.y, 34, 0.5);
       }
+      if (this.combat) {
+        for (const skill of this.combat.skills) hole(skill.x, skill.y, 100 + skill.rank * 8, .9);
+        for (const magic of this.combat.projectiles.slice(-24)) hole(magic.x, magic.y, 42, .45);
+      }
       g.globalAlpha = 1;
       g.globalCompositeOperation = 'source-over';
       ctx.drawImage(lc, 0, 0, lc.width, lc.height, 0, 0, this.viewW, this.viewH);
@@ -1260,6 +1352,7 @@
 
       /* --- boy icon (top-left) --- */
       this.drawCharIcon(ctx, 24, 20, this.boy, '#4ea3d8', t);
+      for (let i = 0; i < this.boy.maxHp; i++) NLA.draw.heart(ctx, 92 + i * 18, 27, 5.4, i < this.boy.hp ? '#6ecbff' : 'rgba(255,255,255,.18)', 1);
       /* shield meter */
       ctx.fillStyle = 'rgba(20,14,36,0.55)';
       NLA.draw.rr(ctx, 84, 40, 90, 9, 4); ctx.fill();
@@ -1268,6 +1361,7 @@
 
       /* --- girl icon (top-right) --- */
       this.drawCharIcon(ctx, vw - 80, 20, this.girl, '#ff9db5', t);
+      for (let i = 0; i < this.girl.maxHp; i++) NLA.draw.heart(ctx, vw - 164 + i * 18, 27, 5.4, i < this.girl.hp ? '#ff8fb3' : 'rgba(255,255,255,.18)', 1);
       ctx.fillStyle = 'rgba(20,14,36,0.55)';
       NLA.draw.rr(ctx, vw - 174, 40, 84, 9, 4); ctx.fill();
       ctx.fillStyle = '#ffd7e8';
@@ -1353,6 +1447,7 @@
         ctx.fillStyle = '#8fe8a3';
         ctx.fillText('💞 online', vw - 16, this.viewH - 16);
       }
+      if (this.combat) this.combat.drawHUD(ctx, t, this);
       ctx.restore();
     }
 

@@ -28,6 +28,9 @@
       <button type="button" class="tc-btn tc-act" id="tc-pow1-btn" aria-label="Wind">
         <span class="tc-ico" id="tc-pow1-ico">🌀</span><span class="tc-btn-copy" id="tc-pow1-copy">Wind</span>
       </button>
+      <button type="button" class="tc-btn tc-act tc-special" id="tc-special-btn" aria-label="Nón Lá special">
+        <span class="tc-ico">△</span><span class="tc-btn-copy" id="tc-special-copy">Nón Lá</span>
+      </button>
       <button type="button" class="tc-btn tc-act tc-jump" id="tc-jump-btn" aria-label="Jump">
         <span class="tc-ico">⬆</span><span class="tc-btn-copy" id="tc-jump-copy">Jump</span>
       </button>
@@ -109,6 +112,7 @@
     <div class="panel-card">
       <h3 data-i18n="onlineTitle">Play Together Online</h3>
       <p class="hint" data-i18n="onlineHint">One of you hosts, the other joins with the room code. Works on phones & computers!</p>
+      <p id="relay-note" class="network-note" role="status"></p>
       <div id="online-choose">
         <div class="pick-row">
           <button class="pick-card small" id="online-pick-boy">
@@ -221,17 +225,18 @@
   <div id="toast"></div>
 </div>
 
-<script src="js/config.js?v=4" defer></script>
+<script src="js/config.js?v=6" defer></script>
 <script src="js/draw.js?v=3" defer></script>
 <script src="js/audio.js?v=3" defer></script>
-<script src="js/input.js?v=5" defer></script>
+<script src="js/input.js?v=6" defer></script>
 <script src="js/levels.js?v=2" defer></script>
 <script src="js/chars.js?v=2" defer></script>
 <script src="js/bg.js?v=3" defer></script>
-<script src="js/entities.js?v=2" defer></script>
-<script src="js/net.js?v=3" defer></script>
-<script src="js/game.js?v=4" defer></script>
-<script src="js/ui.js?v=4" defer></script>
+<script src="js/entities.js?v=6" defer></script>
+<script src="js/combat.js?v=1" defer></script>
+<script src="js/net.js?v=6" defer></script>
+<script src="js/game.js?v=6" defer></script>
+<script src="js/ui.js?v=6" defer></script>
 <script src="js/main.js?v=4" defer></script>
 </body>
 </html>

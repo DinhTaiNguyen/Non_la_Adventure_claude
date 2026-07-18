@@ -57,6 +57,7 @@
     buildNameEditors();
     updateNameLabels();
     UI.updateTouchIcons();
+    updateRelayNote();
   };
 
   /* ---------------- player names (default Joku & Jolie) ---------------- */
@@ -329,11 +330,22 @@
   };
 
   /* ---------------- online flow ---------------- */
+  function updateRelayNote() {
+    const note = $('relay-note');
+    if (!note || !NLA.net) return;
+    const ready = NLA.net.hasRelay && NLA.net.hasRelay();
+    note.textContent = NLA.t(ready ? 'relayReady' : 'relayMissing');
+    note.classList.toggle('ready', !!ready);
+    note.classList.toggle('warning', !ready);
+  }
+
   function openOnline() {
     UI.onlineChar = UI.onlineChar || 'boy';
     markOnlinePick();
     $('room-code-box').classList.add('hidden');
+    updateRelayNote();
     show('online-panel');
+    NLA.net.prepare().then(updateRelayNote);
     if (NLA.net.available()) {
       $('online-choose').classList.remove('hidden');
       hide('online-status');
@@ -384,12 +396,16 @@
         $('room-code-box').classList.remove('hidden');
         break;
       case 'connected':
-        $('online-msg').textContent = NLA.t('partnerJoined');
+        $('online-msg').textContent = NLA.t(detail && detail.path === 'relay' ? 'connectedRelay' : 'connectedDirect');
+        UI.toast($('online-msg').textContent, 3200);
         $('room-code-box').classList.add('hidden');
         setTimeout(() => {
           if (NLA.net.isHost) { hide('online-panel'); openLevelSelect(); }
           else $('online-msg').textContent = NLA.t('partnerJoined');
         }, 700);
+        break;
+      case 'retrying':
+        $('online-msg').textContent = NLA.t('retryingOnline');
         break;
       case 'joinfail':
         $('online-msg').textContent = NLA.t('joinFail');
@@ -476,9 +492,11 @@
     $('tc-pow1-copy').textContent = pow1.label;
     $('tc-pow2-copy').textContent = pow2.label;
     $('tc-jump-copy').textContent = NLA.t('touchJump');
+    $('tc-special-copy').textContent = NLA.t('touchSpecial');
     $('tc-jump-btn').setAttribute('aria-label', NLA.t('touchJump'));
     $('tc-pow1-btn').setAttribute('aria-label', pow1.label);
     $('tc-pow2-btn').setAttribute('aria-label', pow2.label);
+    $('tc-special-btn').setAttribute('aria-label', NLA.t('touchSpecial'));
     $('tc-hands-btn').setAttribute('aria-label', NLA.t('touchHands'));
     $('tc-switch-btn').setAttribute('aria-label', NLA.t('touchSwitch'));
     $('tc-emote-btn').setAttribute('aria-label', NLA.t('touchHeart'));
