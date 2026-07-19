@@ -1,0 +1,15 @@
+# V4 GPT ImageGen prompt set
+
+Generation mode: built-in `image_gen` model. These source atlases are retained in `source-v4/`; the game loads the separately cropped and optimized WebP assets.
+
+## UI kit atlas
+
+Create a premium production-ready fantasy adventure game UI icon atlas for “Nón Lá Love Adventure”, a romantic Vietnamese co-op game. Exactly 12 separate icons in a clean 4 columns × 3 rows grid with generous even gutters: Love heart lantern, partner rescue hands, checkpoint arch, quest scroll, keepsake satchel, health heart, reflecting shield, Nón Lá mastery, wind skill, light skill, map, boss warning. Vietnamese lacquer-art and Hội An silk-lantern influence, carved gold and dark indigo frames, luminous coral-pink, turquoise, moon-blue and warm amber accents, readable at 48–96 px, consistent high-end mobile/PC game UI style, crisp silhouettes, rich material detail, cinematic soft glow, no letters, no numbers, no logos, no watermark. Pure black background behind every cell, no dividers, no overlapping icons, centered objects, square atlas.
+
+## Vietnamese world prop atlas
+
+Create a highest-quality production game environment prop atlas for a beautiful Vietnamese romantic fantasy side-scrolling adventure. Exactly 12 isolated props in a clean 4 columns × 3 rows grid with even gutters: Hội An yellow heritage house with lantern balcony, traditional Thu Bồn river wooden boat with lantern, bamboo-and-thatch village house beside rice baskets, lotus lake pavilion, ancient Vietnamese temple gate with bronze details, grand lantern festival stage, romantic checkpoint arch with twin bells and heart silk, colorful lantern craft stall, braided rope river gate, ornate stone lantern, carved helper jump crate, illuminated quest sign. Painterly cinematic 2.5D game art, culturally respectful Vietnamese architecture and craft motifs, warm lantern lighting, detailed wood/stone/silk, unified night-festival palette, clear side-view silhouettes, centered and fully contained, no people, no text, no letters, no watermark. Flat vivid magenta chroma-key background (#ff00ff), no shadows touching cell edges, no grid lines, no overlaps, square atlas.
+
+## Cooperative VFX atlas
+
+Create a spectacular premium co-op magic VFX sprite atlas for “Nón Lá Love Adventure”. Exactly 6 separate effects in a clean 3 columns × 2 rows grid with large even gutters: lotus-pink revive aura with Vietnamese cloud curls, two luminous hands joining in a rescue ribbon, huge Twin Lantern Love Burst with paired nón lá energy arcs, outward twin wind-and-light shockwave, golden checkpoint memory spiral with tiny lanterns, protective couple ward shaped by two interlocking lantern halos. High-end action RPG VFX concept art, Vietnamese lacquer and silk-lantern motifs, luminous pink-gold-cyan energy, crisp transparent-looking edges, strong readable silhouette, radial symmetry where appropriate, no characters, no text, no logos, no watermark, each effect centered and fully contained. Pure black background for additive screen blending, square atlas.

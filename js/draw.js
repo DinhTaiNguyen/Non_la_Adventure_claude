@@ -73,6 +73,21 @@
     return true;
   };
 
+  /* Transparent production props use ordinary source-over compositing. This
+     keeps their painted shadows and materials intact (unlike luminous VFX). */
+  D.alphaSprite = function (ctx, key, x, y, w, h, alpha, rotation, flip) {
+    const sprite = NLA.art && NLA.art.get(key);
+    if (!sprite) return false;
+    ctx.save();
+    ctx.translate(x, y);
+    if (rotation) ctx.rotate(rotation);
+    if (flip) ctx.scale(-1, 1);
+    ctx.globalAlpha *= alpha === undefined ? 1 : alpha;
+    ctx.drawImage(sprite, -w / 2, -h / 2, w, h);
+    ctx.restore();
+    return true;
+  };
+
   function lanternVariant(color, requested) {
     if (requested) return requested;
     const c = String(color || '').toLowerCase();

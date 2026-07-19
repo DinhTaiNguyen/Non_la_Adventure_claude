@@ -263,7 +263,8 @@
       moving: Math.abs(player.vx) > 30 && player.grounded,
       shieldOn: player.shieldOn, channel: player.channel,
       channelLight: player.channelLight, pow1: !!player.holdingPow1,
-      hp: player.hp, hatEnergy: Math.round(player.hatEnergy),
+      hp: player.hp, downed: !!player.downed, rescueHeld: !!player.rescueHeld,
+      hatEnergy: Math.round(player.hatEnergy),
     });
     if (N.isHost && game) {
       N._objAcc = (N._objAcc || 0) + 1;

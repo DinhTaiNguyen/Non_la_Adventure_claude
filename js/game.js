@@ -18,6 +18,14 @@
     lantern: '#ffb45e', petal: '#ff9fce', leaf: '#9be56d', envelope: '#ff6964',
     banhchung: '#72c878', star: '#ffe276', hat: '#f0d49a', candle: '#ff9c79',
   };
+  const CHAPTER_PROPS = [
+    [{ key: 'hoian-house', x: 420, w: 520, h: 410 }, { key: 'craft-stall', x: 1780, w: 350, h: 285 }, { key: 'hoian-house', x: 4380, w: 500, h: 395, flip: true }],
+    [{ key: 'lotus-pavilion', x: 4340, w: 430, h: 335 }, { key: 'hoian-house', x: 6900, w: 480, h: 380 }],
+    [{ key: 'village-house', x: 720, w: 500, h: 390 }, { key: 'village-house', x: 3860, w: 470, h: 370, flip: true }, { key: 'craft-stall', x: 5740, w: 330, h: 270 }],
+    [{ key: 'lotus-pavilion', x: 1260, w: 460, h: 360 }, { key: 'lotus-pavilion', x: 4250, w: 440, h: 345, flip: true }],
+    [{ key: 'temple-gate', x: 720, w: 480, h: 390 }, { key: 'temple-gate', x: 4320, w: 510, h: 410 }],
+    [{ key: 'festival-stage', x: 1080, w: 500, h: 390 }, { key: 'festival-stage', x: 3650, w: 530, h: 410, flip: true }],
+  ];
 
   class Game {
     constructor(canvas) {
@@ -29,7 +37,10 @@
       this.activeChar = 'boy';    /* solo: which char the player controls */
       this.t = 0;                 /* level time */
       this.love = 0;
+      this.lovePeak = 0;
       this.loveLevel = 0;
+      this.loveBurstCd = 0;
+      this.wipeT = 0;
       this.holdingHands = false;
       this.levelIdx = 0;
       this.cam = { x: 0, y: 0 };
@@ -72,6 +83,8 @@
       this.celebrating = false;
       this.endingT = -1;
       this.holdingHands = false;
+      this.loveBurstCd = 0;
+      this.wipeT = 0;
       this.keyLit = 0;
       this.levelCharms = 0;
       this.levelLoveStart = this.love;
@@ -155,11 +168,14 @@
       if (NLA.art) {
         const rank = NLA.hatRank ? NLA.hatRank() : 1;
         NLA.art.preload(['lantern', 'boss' + (idx + 1), 'skill' + rank,
-          'scene' + (idx + 1), 'enemySkill' + (idx + 1)]);
+          'scene' + (idx + 1), 'enemySkill' + (idx + 1), 'portraitBoySheet', 'portraitGirlSheet',
+          'ui_love', 'ui_rescue', 'ui_checkpoint', 'coop_revive-aura', 'coop_love-burst',
+          'prop_helper-crate', 'prop_checkpoint-arch']);
       }
 
       this.staticSolids = lv.platforms.map(p => ({ x: p.x, y: p.y, w: p.w, h: p.h, oneWay: !!p.oneWay, type: p.type }));
       this.solids = [];
+      this.captureCheckpoint(lv.spawnX, { initial: true });
 
       NLA.bg.build(lv.theme, lv.id * 777 + 13, idx + 1);
       NLA.audio.setTheme(lv.theme);
@@ -186,7 +202,7 @@
       return U.dist(x, y, b.x, b.y - 40) < r;
     }
     damagePlayer(pl, amount, knockX, knockY, source, fromNet) {
-      if (!pl || this.state !== 'play' || pl.invuln > 0) return false;
+      if (!pl || pl.downed || this.state !== 'play' || pl.invuln > 0) return false;
       if (!fromNet && this.net.active && !this.net.isHost) return false;
       pl.hp = Math.max(0, pl.hp - Math.max(1, amount || 1));
       pl.invuln = 1.15;
@@ -198,20 +214,30 @@
       }
       NLA.audio.sfx('hurt');
       P().burst(pl.x, pl.y - 38, 12, { kind: 'spark', color: '#ff829f', glow: 'pink', speed: 110, life: .65, size: 3 });
-      let revived = false;
       if (pl.hp <= 0) {
-        revived = true;
-        pl.hp = pl.maxHp;
-        pl.x = this.checkpointX + (pl.who === 'boy' ? -24 : 24);
-        pl.y = this.level.groundY - 4;
+        pl.downed = true; pl.reviveProgress = 0; pl.downedT = 0;
         pl.vx = pl.vy = 0;
-        pl.hatEnergy = Math.max(pl.hatEnergy, 55);
-        pl.invuln = 2;
-        NLA.ui.toast(NLA.t('playerRevived'));
+        pl.stun = 0; pl.invuln = 0; this.holdingHands = false;
+        const water = this.waterAt(pl.x);
+        if (water !== null || pl.y > this.level.H) {
+          const boat = this.objects.find(o => o instanceof E.Boat);
+          const segment = this.level.water.find(w => pl.x >= w.x && pl.x <= w.x + w.w);
+          const boatMid = boat && boat.x + boat.w / 2;
+          if (boat && segment && boatMid >= segment.x - 40 && boatMid <= segment.x + segment.w + 40) {
+            pl.x = boat.x + boat.w / 2; pl.y = boat.bobY(this.t) - 2;
+          }
+          else { pl.x = pl.lastSafeX || this.checkpointX; pl.y = (pl.lastSafeY || this.level.groundY) - 2; }
+        }
+        if (this.mode === 'solo' && this.activeChar === pl.who) {
+          this.activeChar = this.players.find(p => p !== pl).who;
+          NLA.ui.updateTouchIcons();
+        }
+        NLA.ui.toast(NLA.t('partnerDown'), 3600);
+        this.spawnAbilityFx('coop_revive-aura', pl.x, pl.y - 45, 1, 155, 1.2);
       }
       if (!fromNet) this.emitEvent('combatHit', {
         who: pl.who, hp: pl.hp, x: pl.x, y: pl.y, vx: pl.vx, vy: pl.vy,
-        source: String(source || '').slice(0, 40), revived,
+        source: String(source || '').slice(0, 40), downed: !!pl.downed,
       });
       return true;
     }
@@ -222,10 +248,11 @@
     addLove(n, x, y) {
       if (this.love >= C.LOVE_MAX && n > 0) return;
       this.love = U.clamp(this.love + n, 0, C.LOVE_MAX);
+      this.lovePeak = Math.max(this.lovePeak, this.love);
       if (x !== undefined) {
         P().burst(x, y, Math.min(6, n + 1), { kind: 'heart', color: '#ff8fae', speed: 60, life: 1.2, size: 4, grav: -50 });
       }
-      const lv = C.LOVE_LEVELS.filter(th => this.love >= th).length;
+      const lv = C.LOVE_LEVELS.filter(th => this.lovePeak >= th).length;
       if (lv > this.loveLevel) {
         this.loveLevel = lv;
         NLA.audio.sfx('loveUp');
@@ -287,7 +314,7 @@
       this.abilityFx.push({ kind, x, y, dir: dir || 1, size: size || 150,
         life: life || .7, maxLife: life || .7, age: 0 });
       if (this.abilityFx.length > 12) this.abilityFx.splice(0, this.abilityFx.length - 12);
-      if (NLA.art) NLA.art.load('ability_' + kind);
+      if (NLA.art) NLA.art.load(kind.startsWith('coop_') ? kind : 'ability_' + kind);
     }
     updateAbilityFx(dt) {
       for (const fx of this.abilityFx) { fx.life -= dt; fx.age += dt; }
@@ -302,7 +329,8 @@
         const pct = U.clamp(fx.life / fx.maxLife, 0, 1);
         const grow = .72 + (1 - pct) * .42;
         const rotation = fx.kind === 'wind' ? fx.dir * .12 : (fx.kind === 'shield' ? t * .18 : 0);
-        NLA.draw.artSprite(ctx, 'ability_' + fx.kind, fx.x, fx.y,
+        const artKey = fx.kind.startsWith('coop_') ? fx.kind : 'ability_' + fx.kind;
+        NLA.draw.artSprite(ctx, artKey, fx.x, fx.y,
           fx.size * grow, fx.size * grow, Math.sin(Math.min(1, fx.age * 7)) * pct, rotation);
       }
     }
@@ -328,7 +356,88 @@
         this.spawnAbilityFx('resonance', h.x, h.y, 1, 165, .95);
       }
     }
-    setCheckpoint(x) { this.checkpointX = x; }
+    setCheckpoint(x, checkpoint) {
+      this.checkpointX = x;
+      this.captureCheckpoint(x, { boatX: checkpoint && checkpoint.boatX });
+    }
+    captureCheckpoint(x, opts) {
+      opts = opts || {};
+      const boat = this.objects && this.objects.find(o => o instanceof E.Boat);
+      const boxes = {};
+      for (const o of (this.objects || [])) {
+        if (o instanceof E.Box && !o.fixed) boxes[o.id] = { x: o.x, y: o.y };
+      }
+      this.checkpointState = {
+        x, y: opts.y || this.level.groundY,
+        boatX: Number.isFinite(opts.boatX) ? opts.boatX : (boat ? boat.x : null),
+        spawnOnBoat: !!opts.spawnOnBoat,
+        boxes,
+      };
+      this.checkpointX = x;
+      if (!opts.initial) {
+        this.spawnAbilityFx('coop_checkpoint-spiral', x, this.checkpointState.y - 88, 1, 175, 1.25);
+      }
+    }
+    captureProgressCheckpoint(reason) {
+      if (this.net.active && !this.net.isHost) return;
+      const living = this.players.filter(p => !p.downed);
+      if (!living.length) return;
+      const boat = this.objects.find(o => o instanceof E.Boat);
+      const aboard = boat && living.some(p => p.x > boat.x - 20 && p.x < boat.x + boat.w + 20 && Math.abs(p.y - boat.bobY(this.t)) < 90);
+      let x, y;
+      if (aboard) {
+        x = boat.x + boat.w / 2; y = boat.bobY(this.t) - 2;
+      } else {
+        x = living.reduce((sum, p) => sum + (p.lastSafeX || p.x), 0) / living.length;
+        y = living.reduce((sum, p) => sum + (p.lastSafeY || p.y), 0) / living.length;
+      }
+      this.captureCheckpoint(x, { y, boatX: boat ? boat.x : null, spawnOnBoat: aboard });
+      NLA.ui.toast(NLA.t('progressSaved'), 2800);
+      this.emitEvent('progressCheckpoint', { reason, x, y, boatX: boat ? boat.x : null, spawnOnBoat: aboard });
+    }
+    respawnAtCheckpoint(pl) {
+      const state = this.checkpointState || { x: this.checkpointX, y: this.level.groundY };
+      const boat = this.objects.find(o => o instanceof E.Boat);
+      if (state.spawnOnBoat && boat) {
+        pl.x = boat.x + boat.w / 2 + (pl.who === 'boy' ? -24 : 24);
+        pl.y = boat.bobY(this.t) - 2;
+      } else {
+        pl.x = state.x + (pl.who === 'boy' ? -24 : 24);
+        pl.y = state.y - 2;
+      }
+      pl.vx = pl.vy = 0; pl.stun = 0; pl.grounded = false;
+    }
+    restoreCheckpoint(fromNet, data) {
+      if (data) this.captureCheckpoint(data.x, data);
+      const state = this.checkpointState || { x: this.checkpointX, y: this.level.groundY, boxes: {} };
+      const boat = this.objects.find(o => o instanceof E.Boat);
+      if (boat && Number.isFinite(state.boatX)) {
+        boat.x = state.boatX; boat.prevX = state.boatX; boat.vx = 0;
+      }
+      for (const o of this.objects) {
+        if (o instanceof E.Box && !o.fixed && state.boxes && state.boxes[o.id]) {
+          o.x = state.boxes[o.id].x; o.y = state.boxes[o.id].y; o.vx = o.vy = 0;
+        }
+      }
+      for (const pl of this.players) {
+        pl.downed = false; pl.reviveProgress = 0; pl.downedT = 0;
+        pl.hp = pl.maxHp; pl.invuln = 2.2; pl.hatEnergy = Math.max(pl.hatEnergy, 65);
+        this.respawnAtCheckpoint(pl);
+      }
+      this.holdingHands = false; this.wipeT = 0;
+      if (this.combat) {
+        this.combat.projectiles.length = 0; this.combat.skills.length = 0;
+        for (const enemy of this.combat.enemies) {
+          if (!enemy.dead) { enemy.x = enemy.homeX; enemy.y = enemy.homeY; enemy.attackT = Math.max(enemy.attackT, 2.2); }
+        }
+      }
+      const x = state.spawnOnBoat && boat ? boat.x + boat.w / 2 : state.x;
+      const y = state.spawnOnBoat && boat ? boat.bobY(this.t) - 55 : state.y - 75;
+      this.spawnAbilityFx('coop_checkpoint-spiral', x, y, 1, 230, 1.35);
+      P().burst(x, y, 30, { kind: 'heart', color: '#ff9db5', speed: 140, life: 1.4, size: 5, grav: -45 });
+      NLA.audio.sfx('bell'); NLA.ui.toast(NLA.t('checkpointRestored'), 3400);
+      if (!fromNet) this.emitEvent('partyRestore', { x: state.x, y: state.y, boatX: state.boatX, spawnOnBoat: state.spawnOnBoat });
+    }
     triggerMemory(m) {
       this.levelMemories++;
       this.state = 'memory';
@@ -355,7 +464,7 @@
     getCtrl(pl) {
       const I = NLA.input;
       if (pl.remote) return null;
-      if (this.cutscene) return {};
+      if (this.cutscene || pl.downed) return {};
       if (this.mode === 'local') {
         return pl.who === 'boy' ? I.readBoyKeys() : I.readGirlKeys();
       }
@@ -532,7 +641,7 @@
     }
 
     handlePowers(pl, ctrl, dt) {
-      if (!ctrl) return;
+      if (!ctrl || pl.downed) return;
       pl.holdingPow1 = !!ctrl.pow1;
       const press1 = ctrl.pow1 && !pl.prevP1;
       const press2 = ctrl.pow2 && !pl.prevP2;
@@ -595,6 +704,15 @@
       const dist = U.dist(a.x, a.y, b.x, b.y);
       let pressed = false;
       const anyHands = ctrls.some(c => c && c.hands);
+      for (let i = 0; i < this.players.length; i++) {
+        if (ctrls[i] !== null) this.players[i].rescueHeld = !!(ctrls[i] && ctrls[i].hands);
+      }
+      if (a.downed || b.downed) {
+        this.holdingHands = false;
+        this.prevHands = anyHands;
+        I.consumeHandsTouch();
+        return;
+      }
       if (anyHands && !this.prevHands) pressed = true;
       this.prevHands = anyHands;
       if (I.consumeHandsTouch()) pressed = true;
@@ -629,6 +747,85 @@
         }
         this.prevLoveJump = anyJump;
       } else this.prevLoveJump = false;
+    }
+
+    updateRescue(dt, ctrls) {
+      if (this.net.active && !this.net.isHost) return;
+      const down = this.players.filter(p => p.downed);
+      if (down.length === 2) {
+        this.wipeT += dt;
+        if (this.wipeT >= 1.25) this.restoreCheckpoint(false);
+        return;
+      }
+      this.wipeT = 0;
+      if (down.length !== 1) return;
+      const fallen = down[0], rescuer = this.players.find(p => p !== fallen);
+      const idx = this.players.indexOf(rescuer);
+      const held = !!((ctrls[idx] && ctrls[idx].hands) || rescuer.rescueHeld);
+      const close = U.dist(fallen.x, fallen.y, rescuer.x, rescuer.y) <= C.REVIVE_DIST;
+      if (held && close && !rescuer.downed) {
+        fallen.reviveProgress = Math.min(1, fallen.reviveProgress + dt / C.REVIVE_TIME);
+        if (Math.random() < dt * 18) P().spawn({
+          x: U.rand(Math.min(fallen.x, rescuer.x), Math.max(fallen.x, rescuer.x)),
+          y: fallen.y - U.rand(28, 82), vx: U.rand(-15, 15), vy: U.rand(-70, -30),
+          life: .8, size: 3, kind: 'heart', color: '#ff9fc4', glow: 'pink', grav: -20,
+        });
+        if (fallen.reviveProgress >= 1) this.revivePlayer(fallen, rescuer, false);
+      } else {
+        fallen.reviveProgress = Math.max(0, fallen.reviveProgress - dt * .38);
+      }
+    }
+
+    revivePlayer(fallen, rescuer, fromNet) {
+      if (!fallen) return;
+      fallen.downed = false; fallen.reviveProgress = 0; fallen.downedT = 0;
+      fallen.hp = Math.max(2, Math.ceil(fallen.maxHp * .5));
+      fallen.invuln = 2; fallen.hatEnergy = Math.max(fallen.hatEnergy, 55);
+      fallen.vx = 0; fallen.vy = -120;
+      if (rescuer) rescuer.invuln = Math.max(rescuer.invuln, 1.2);
+      this.addLove(NLA.LOVE.save, fallen.x, fallen.y - 55);
+      this.spawnAbilityFx('coop_rescue-hands', (fallen.x + (rescuer ? rescuer.x : fallen.x)) / 2, fallen.y - 52, 1, 180, .95);
+      this.spawnAbilityFx('coop_revive-aura', fallen.x, fallen.y - 48, 1, 185, 1.15);
+      P().burst(fallen.x, fallen.y - 45, 24, { kind: 'heart', color: '#ff91bd', glow: 'pink', speed: 125, life: 1.2, size: 4, grav: -40 });
+      NLA.audio.sfx('loveUp'); NLA.ui.toast(NLA.t('partnerRescued'), 3000);
+      if (!fromNet) this.emitEvent('rescue', { who: fallen.who, by: rescuer && rescuer.who, hp: fallen.hp });
+    }
+
+    tryLoveBurst(fromRequest) {
+      if (this.net.active && !this.net.isHost && !fromRequest) {
+        this.net.send({ t: 'ev', k: 'loveBurstRequest', d: {} });
+        return;
+      }
+      const [a, b] = this.players;
+      if (a.downed || b.downed) { NLA.ui.toast(NLA.t('loveBurstNeedPartner'), 1800); return; }
+      if (this.love < C.LOVE_BURST_COST) { NLA.ui.toast(NLA.t('loveBurstNeedCharge').replace('{LOVE}', Math.ceil(C.LOVE_BURST_COST - this.love)), 1800); return; }
+      if (U.dist(a.x, a.y, b.x, b.y) > 290) { NLA.ui.toast(NLA.t('loveBurstTooFar'), 1800); return; }
+      if (this.loveBurstCd > 0) return;
+      this.love -= C.LOVE_BURST_COST;
+      this.loveBurstCd = 2.4;
+      this.performLoveBurst(false);
+      this.emitEvent('loveBurst', { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 - 48, love: this.love });
+    }
+
+    performLoveBurst(fromNet) {
+      const [a, b] = this.players;
+      const x = (a.x + b.x) / 2, y = (a.y + b.y) / 2 - 48;
+      for (const pl of this.players) {
+        pl.hp = Math.min(pl.maxHp, pl.hp + 1); pl.invuln = 1.8; pl.powerFx = 2; pl.wings = 1.2;
+      }
+      this.spawnAbilityFx('coop_love-burst', x, y, 1, 520, 1.15);
+      this.spawnAbilityFx('coop_twin-wave', x, y, 1, 650, .9);
+      this.spawnAbilityFx('coop_couple-ward', x, y, 1, 300, 1.25);
+      for (let i = 0; i < 42; i++) {
+        const ang = (i / 42) * Math.PI * 2;
+        P().spawn({ x, y, vx: Math.cos(ang) * U.rand(220, 480), vy: Math.sin(ang) * U.rand(180, 360), life: 1.1, size: 4, kind: i % 3 ? 'spark' : 'heart', color: i % 2 ? '#ff9fc7' : '#ffe6a3', glow: 'pink', drag: .91 });
+      }
+      if ((!this.net.active || this.net.isHost) && this.combat) {
+        this.combat.hitCircle(x, y, C.LOVE_BURST_RADIUS, 44 + NLA.hatRank() * 8, this, 'love');
+        this.combat.projectiles.length = 0;
+      }
+      NLA.audio.sfx('loveUp'); NLA.audio.sfx('hatSkill');
+      NLA.ui.toast(NLA.t('loveBurstCast'), 3200);
     }
 
     /* ================= wind waves (lake) ================= */
@@ -668,6 +865,7 @@
       }
       this.t += dt;
       const I = NLA.input;
+      this.loveBurstCd = Math.max(0, this.loveBurstCd - dt);
 
       if (this.state === 'ending') { this.updateEnding(dt); return; }
 
@@ -689,6 +887,12 @@
       const ctrls = this.players.map(pl => this.getCtrl(pl));
       this.players.forEach((pl, i) => { if (!pl.remote) this.handlePowers(pl, ctrls[i], dt); });
       this.updateHands(ctrls);
+      this.updateRescue(dt, ctrls);
+      if (I.consumeLove()) this.tryLoveBurst(false);
+      if (NLA.ui.updateLoveAction) {
+        const unavailable = this.players.some(p => p.downed) || U.dist(this.boy.x, this.boy.y, this.girl.x, this.girl.y) > 290;
+        NLA.ui.updateLoveAction(this.love, this.love >= C.LOVE_BURST_COST && !unavailable && this.loveBurstCd <= 0, unavailable);
+      }
       this.updateWaves(dt);
 
       /* build dynamic solids */
@@ -740,7 +944,7 @@
 
       /* water splash & respawn (local players) */
       for (const pl of this.players) {
-        if (pl.remote) continue;
+        if (pl.remote || pl.downed) continue;
         const wy = this.waterAt(pl.x);
         if (wy !== null && pl.y > wy + 14 && !pl.grounded) {
           NLA.audio.sfx('splash');
@@ -749,17 +953,19 @@
           this.emitEvent('splash', { x: pl.x, y: wy });
           /* respawn */
           const boat = this.objects.find(o => o instanceof E.Boat);
-          if (boat && Math.abs(boat.x + boat.w / 2 - pl.x) < 500) {
+          const segment = this.level.water.find(w => pl.x >= w.x && pl.x <= w.x + w.w);
+          const boatMid = boat && boat.x + boat.w / 2;
+          if (boat && segment && boatMid >= segment.x - 40 && boatMid <= segment.x + segment.w + 40) {
             pl.x = boat.x + boat.w / 2; pl.y = boat.bobY(this.t) - 2;
           } else {
-            pl.x = pl.lastSafeX; pl.y = pl.lastSafeY - 2;
+            this.respawnAtCheckpoint(pl);
           }
           pl.vx = 0; pl.vy = 0; pl.stun = 0.5;
           NLA.ui.toast(NLA.t('fellWater'));
         }
         /* fell below world */
         if (pl.y > this.level.H + 60) {
-          pl.x = this.checkpointX; pl.y = this.level.groundY - 4; pl.vx = pl.vy = 0;
+          this.respawnAtCheckpoint(pl);
         }
       }
 
@@ -955,6 +1161,7 @@
         if (remote) {
           remote.netTarget = msg;
           remote.holdingPow1 = !!msg.pow1;
+          remote.rescueHeld = !!msg.rescueHeld;
           if (Math.abs(remote.x - msg.x) > 240) { remote.x = msg.x; remote.y = msg.y; }
         }
       } else if (msg.t === 'ev') {
@@ -964,7 +1171,9 @@
       } else if (msg.t === 'level') {
         NLA.ui.startLevelFlow(msg.idx, true);
       } else if (msg.t === 'love') {
-        this.love = msg.v; this.loveLevel = C.LOVE_LEVELS.filter(th => this.love >= th).length;
+        this.love = msg.v;
+        this.lovePeak = Math.max(this.lovePeak, Number.isFinite(msg.peak) ? msg.peak : this.love);
+        this.loveLevel = C.LOVE_LEVELS.filter(th => this.lovePeak >= th).length;
       } else if (msg.t === 'name') {
         this.partnerName = String(msg.v || '').slice(0, 12);
       }
@@ -980,7 +1189,7 @@
       const culture = this.objects.filter(o => o instanceof E.CultureRelic && o.seen).map(o => o.id);
       this.net.send({ t: 'snap', d: { boxes, boat, culture, combat: this.combat ? this.combat.snapshot() : null } });
       /* love authoritative from host */
-      this.net.send({ t: 'love', v: this.love });
+      this.net.send({ t: 'love', v: this.love, peak: this.lovePeak });
     }
 
     applyEvent(k, d) {
@@ -1002,9 +1211,17 @@
           case 'bridgeHeal': if (o && !o.healed) { o.healed = true; NLA.audio.sfx('heal'); } break;
           case 'statueHeal': if (o && !o.healed) { o.healed = true; NLA.audio.sfx('heal'); } break;
           case 'checkpoint': {
-            this.checkpointX = d.x;
+            this.setCheckpoint(d.x, { boatX: d.boatX });
             const cp = this.objects.find(ob => ob instanceof E.Checkpoint && ob.x === d.x);
             if (cp) cp.done = true;
+            break;
+          }
+          case 'progressCheckpoint': this.captureCheckpoint(d.x, d); break;
+          case 'partyRestore': this.restoreCheckpoint(true, d); break;
+          case 'rescue': {
+            const fallen = this.players.find(p => p.who === d.who);
+            const rescuer = this.players.find(p => p.who === d.by);
+            if (fallen) this.revivePlayer(fallen, rescuer, true);
             break;
           }
           case 'dispel': if (o && !o.gone) { o.gone = true; NLA.audio.sfx('dispel'); } break;
@@ -1020,6 +1237,21 @@
           case 'loveJump': {
             for (const p of this.players) { p.wings = 1.6; if (!p.remote && this.holdingHands) { p.vy = -1080; p.grounded = false; } }
             this.spawnAbilityFx('love-jump', (this.boy.x + this.girl.x) / 2, this.boy.y - 78, 1, 225, 1.05);
+            break;
+          }
+          case 'loveBurstRequest': {
+            if (this.net.isHost) {
+              this._suppress = false;
+              this.tryLoveBurst(true);
+              this._suppress = true;
+            }
+            break;
+          }
+          case 'loveBurst': {
+            if (!this.net.isHost) {
+              if (Number.isFinite(d.love)) this.love = d.love;
+              this.performLoveBurst(true);
+            }
             break;
           }
           case 'emote': {
@@ -1053,8 +1285,10 @@
             const hurt = this.players.find(p => p.who === d.who);
             if (hurt) {
               hurt.hp = Number.isFinite(d.hp) ? d.hp : hurt.hp;
-              hurt.invuln = d.revived ? 2 : 1.15;
-              hurt.stun = d.revived ? 0 : .62;
+              hurt.downed = !!d.downed;
+              hurt.reviveProgress = 0;
+              hurt.invuln = d.downed ? 0 : 1.15;
+              hurt.stun = d.downed ? 0 : .62;
               if (Number.isFinite(d.x)) hurt.x = d.x;
               if (Number.isFinite(d.y)) hurt.y = d.y;
               if (Number.isFinite(d.vx)) hurt.vx = d.vx;
@@ -1102,6 +1336,15 @@
     updateTip() {
       this.tip = null;
       const local = this.players.filter(p => !p.remote);
+      const fallen = this.players.find(p => p.downed);
+      if (fallen) {
+        const rescuer = this.players.find(p => p !== fallen && !p.downed);
+        if (rescuer) {
+          const close = U.dist(fallen.x, fallen.y, rescuer.x, rescuer.y) <= C.REVIVE_DIST;
+          this.tip = close ? NLA.t('rescuePrompt') : NLA.t('partnerDown');
+          return;
+        }
+      }
       for (const o of this.objects) {
         if (o instanceof E.Sign) {
           for (const pl of local) {
@@ -1168,6 +1411,8 @@
       ctx.save();
       ctx.translate(-camX, -camY);
 
+      this.drawChapterSetDressing(ctx, drawLeft, drawRight);
+
       /* water */
       for (const w of lv.water) {
         if (w.x + w.w >= drawLeft && w.x <= drawRight) this.drawWater(ctx, w, t, drawLeft, drawRight);
@@ -1188,6 +1433,7 @@
       /* players + hand link */
       if (this.holdingHands) NLA.chars.drawHandLink(ctx, this.players[0], this.players[1], t);
       for (const pl of this.players) pl.draw(ctx, t, this);
+      this.drawRescueState(ctx, t);
 
       /* enemies above players */
       for (const e of this.enemies) if (inDrawRange(e)) e.draw(ctx, t);
@@ -1275,6 +1521,31 @@
         }
       }
       ctx.restore();
+    }
+
+    drawChapterSetDressing(ctx, drawLeft, drawRight) {
+      const props = CHAPTER_PROPS[this.levelIdx] || [];
+      for (const p of props) {
+        if (p.x + p.w / 2 < drawLeft || p.x - p.w / 2 > drawRight) continue;
+        NLA.draw.alphaSprite(ctx, 'prop_' + p.key, p.x, this.level.groundY - p.h / 2 + 8, p.w, p.h, .78, 0, p.flip);
+      }
+    }
+
+    drawRescueState(ctx, t) {
+      for (const pl of this.players) {
+        if (!pl.downed) continue;
+        NLA.draw.artSprite(ctx, 'coop_revive-aura', pl.x, pl.y - 42, 150, 150, .54 + Math.sin(t * 3) * .12, t * .13);
+        ctx.save();
+        ctx.lineWidth = 6; ctx.lineCap = 'round';
+        ctx.strokeStyle = 'rgba(255,255,255,.18)';
+        ctx.beginPath(); ctx.arc(pl.x, pl.y - 104, 23, 0, Math.PI * 2); ctx.stroke();
+        ctx.strokeStyle = '#ff9fc7';
+        ctx.beginPath(); ctx.arc(pl.x, pl.y - 104, 23, -Math.PI / 2, -Math.PI / 2 + pl.reviveProgress * Math.PI * 2); ctx.stroke();
+        const rescuing = pl.reviveProgress > 0;
+        ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'center'; ctx.fillStyle = '#fff2d2';
+        ctx.fillText(NLA.t(rescuing ? 'reviving' : 'rescuePrompt'), pl.x, pl.y - 134);
+        ctx.restore();
+      }
     }
 
     drawPlatform(ctx, p, t) {
@@ -1467,6 +1738,7 @@
       NLA.draw.rr(ctx, 84, 40, 90, 9, 4); ctx.fill();
       ctx.fillStyle = '#7fd8d3';
       NLA.draw.rr(ctx, 86, 42, 86 * (this.boy.shieldMeter / C.SHIELD_MAX), 5, 2); ctx.fill();
+      NLA.draw.artSprite(ctx, 'ui_shield', 181, 44, 27, 27, .72);
 
       /* --- girl icon (top-right) --- */
       this.drawCharIcon(ctx, vw - 80, 20, this.girl, '#ff9db5', t);
@@ -1480,6 +1752,7 @@
       const lx = vw / 2, ly = 18;
       const pct = this.love / C.LOVE_MAX;
       ctx.save();
+      NLA.draw.artSprite(ctx, 'ui_love', lx, ly + 25, 80, 80, .42 + pct * .35, 0);
       NLA.draw.glow(ctx, 'pink', lx, ly + 26, 40 + pct * 26, 0.3 + pct * 0.4);
       /* lantern outline */
       ctx.strokeStyle = '#f2c17e';
@@ -1517,6 +1790,9 @@
         ctx.fillStyle = i < this.loveLevel ? '#ff8fae' : 'rgba(255,255,255,0.22)';
         ctx.beginPath(); ctx.arc(px, ly + 64, 3.4, 0, 6.283); ctx.fill();
       }
+      ctx.font = 'bold 9px sans-serif'; ctx.textAlign = 'center';
+      ctx.fillStyle = this.love >= C.LOVE_BURST_COST ? '#fff0a8' : 'rgba(255,235,220,.66)';
+      ctx.fillText(this.love >= C.LOVE_BURST_COST ? NLA.t('loveReady') : `${Math.floor(this.love)}/${C.LOVE_BURST_COST}`, lx, ly + 77);
       ctx.restore();
 
       /* --- key lantern counter (under love meter) --- */
@@ -1524,6 +1800,7 @@
       ctx.textAlign = 'center';
       ctx.fillStyle = '#ffe9b3';
       ctx.fillText(`🏮 ${this.keyLit} / ${this.level.required}`, lx, ly + 88);
+      NLA.draw.artSprite(ctx, 'ui_quest', lx - 68, ly + 83, 30, 30, .68);
 
       /* --- charms (bottom-left) --- */
       ctx.textAlign = 'left';
@@ -1593,16 +1870,17 @@
       ctx.beginPath();
       ctx.arc(x + 28, y + 28, 30, -Math.PI / 2, -Math.PI / 2 + U.clamp(cdFrac, 0, 1) * 6.283);
       ctx.stroke();
-      /* mini face */
+      /* integrated production character-sheet portrait */
       ctx.beginPath(); ctx.arc(x + 28, y + 28, 25, 0, 6.283); ctx.clip();
-      ctx.fillStyle = '#ffe6ce';
-      ctx.beginPath(); ctx.arc(x + 28, y + 32, 16, 0, 6.283); ctx.fill();
-      ctx.fillStyle = '#241a18';
-      ctx.beginPath(); ctx.arc(x + 28, y + 27, 15, Math.PI, 0); ctx.fill();
-      NLA.draw.nonLa(ctx, x + 28, y + 20, 34, 0, pl.who === 'boy' ? 'blue' : 'pink', pl.powerFx * 0.6, t);
-      ctx.fillStyle = '#33222a';
-      ctx.beginPath(); ctx.arc(x + 23, y + 33, 1.8, 0, 6.283); ctx.fill();
-      ctx.beginPath(); ctx.arc(x + 33, y + 33, 1.8, 0, 6.283); ctx.fill();
+      const portrait = NLA.art && NLA.art.get(pl.who === 'boy' ? 'portraitBoySheet' : 'portraitGirlSheet');
+      if (portrait) ctx.drawImage(portrait, x + 3, y + 3, 50, 50);
+      else {
+        ctx.fillStyle = '#ffe6ce'; ctx.beginPath(); ctx.arc(x + 28, y + 32, 16, 0, 6.283); ctx.fill();
+        ctx.fillStyle = '#241a18'; ctx.beginPath(); ctx.arc(x + 28, y + 27, 15, Math.PI, 0); ctx.fill();
+        NLA.draw.nonLa(ctx, x + 28, y + 20, 34, 0, pl.who === 'boy' ? 'blue' : 'pink', pl.powerFx * 0.6, t);
+        ctx.fillStyle = '#33222a'; ctx.beginPath(); ctx.arc(x + 23, y + 33, 1.8, 0, 6.283); ctx.fill();
+        ctx.beginPath(); ctx.arc(x + 33, y + 33, 1.8, 0, 6.283); ctx.fill();
+      }
       ctx.restore();
       /* active char marker (solo) */
       if (this.mode === 'solo' && this.activeChar === pl.who) {
@@ -1614,6 +1892,10 @@
       if (pl.dim > 0) {
         ctx.fillStyle = 'rgba(90,70,120,0.6)';
         ctx.beginPath(); ctx.arc(x + 28, y + 28, 25, 0, 6.283); ctx.fill();
+      }
+      if (pl.downed) {
+        ctx.fillStyle = 'rgba(38,8,35,.68)'; ctx.beginPath(); ctx.arc(x + 28, y + 28, 25, 0, 6.283); ctx.fill();
+        NLA.draw.artSprite(ctx, 'ui_rescue', x + 28, y + 28, 42, 42, .9);
       }
     }
 

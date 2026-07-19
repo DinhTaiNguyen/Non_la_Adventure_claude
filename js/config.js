@@ -18,6 +18,10 @@ NLA.CONST = {
   HANDS_DIST: 80,
   LOVE_MAX: 100,
   LOVE_LEVELS: [15, 35, 55, 75, 95],
+  LOVE_BURST_COST: 35,
+  LOVE_BURST_RADIUS: 410,
+  REVIVE_DIST: 94,
+  REVIVE_TIME: 1.45,
   HAT_SPECIAL_COST: 42,
   HAT_SPECIAL_REGEN: 7.5,
   HAT_XP_LEVELS: [0, 40, 100, 180, 280, 400],
@@ -74,6 +78,15 @@ NLA.COSTUMES = [
 /* ---------------- i18n ---------------- */
 NLA.I18N = {
   en: {
+    loveBurstName: 'TWIN LANTERN', loveBurstHint: 'Spend 35 Love for a powerful two-hero attack',
+    loveReady: 'READY · F', loveBurstCast: '💞 Twin Lantern Resonance! Love becomes shared power.',
+    loveBurstNeedCharge: 'Build {LOVE} more Love to use Twin Lantern.', loveBurstTooFar: 'Move closer to your partner first.',
+    loveBurstNeedPartner: 'Revive your partner before using the collaboration move.',
+    partnerDown: 'Your partner is down — stand close and HOLD Hands to revive!',
+    partnerRescued: 'Partner rescued! Two Hearts restored · +6 Love',
+    rescuePrompt: 'HOLD H / 🤝 TO RESCUE', reviving: 'RESTORING THEIR LIGHT…',
+    progressSaved: 'Journey saved — boat and puzzle positions remembered.',
+    checkpointRestored: 'Both heroes restored at the last safe journey point.',
     playSolo: 'Play Solo', local2p: '2 Players · One Keyboard', online: 'Play Online Together 💞',
     wardrobe: 'Wardrobe', howto: 'How to Play', back: 'Back', select: 'Select',
     menuFoot: 'A cozy Vietnamese fairytale about love & light ✨',
@@ -101,8 +114,8 @@ NLA.I18N = {
     charmsOwned: 'Charms collected', rotate: 'Please rotate your phone to landscape 💛',
     touchMoveLeft: 'Move left', touchMoveRight: 'Move right', touchJump: 'Jump',
     touchWind: 'Wind', touchShield: 'Shield', touchLight: 'Light', touchLotus: 'Lotus',
-    touchHands: 'Hold hands', touchSwitch: 'Switch character', touchHeart: 'Send a heart emote', touchSpecial: 'Nón Lá special',
-    touchGuide: 'Left: slide to walk. Tap △ Nón Lá when its gold meter is ready. 💗 is only a friendly emote.',
+    touchHands: 'Hold / Rescue', touchSwitch: 'Switch character', touchHeart: 'Send a heart emote', touchSpecial: 'Nón Lá special',
+    touchGuide: 'Slide anywhere on the left to walk. HOLD 🤝 beside a fallen partner to revive. Use TWIN LANTERN at 35 Love.',
     spiritMonster: 'Restless spirit', spiritMagic: 'spirit magic', hatMastery: 'Nón Lá Mastery', bossPhase: 'Phase',
     hatSkillName1: 'Golden Rim', hatSkillName2: 'Moon-River Return', hatSkillName3: 'Thánh Gióng Bamboo Gale',
     hatSkillName4: 'Lotus Halo', hatSkillName5: 'Bronze Dragon Seal', hatSkillName6: 'Twin-Star Tempest',
@@ -215,7 +228,7 @@ NLA.I18N = {
 <h5>🕹 Keyboard — Player 2 (Girl · {GIRL})</h5>
 <p><span class="kbd">◀</span><span class="kbd">▶</span> move · <span class="kbd">▲</span> jump · <span class="kbd">O</span> Light Pulse · <span class="kbd">P</span> Lotus · <span class="kbd">I</span> Nón Lá special</p>
 <h5>💞 Together</h5>
-<p><span class="kbd">H</span> hold hands (stand close) · <span class="kbd">Tab</span> swap character (solo) · <span class="kbd">1</span><span class="kbd">2</span><span class="kbd">3</span> emotes · <span class="kbd">Esc</span> pause</p>
+<p><span class="kbd">H</span> hold hands; HOLD it beside a fallen partner to revive · <span class="kbd">F</span> spend 35 Love on Twin Lantern Resonance · <span class="kbd">Tab</span> swap character (solo) · <span class="kbd">Esc</span> pause</p>
 <h5>🌀 {BOY} (boy)</h5><p>Wind damages and pushes spirits, moves lanterns, boats and crates. Hold Shield to protect both players and reflect boss magic back at its caster.</p>
 <h5>✨ {GIRL} (girl)</h5><p>Light damages shadow spirits, wakes lanterns and heals broken things. Lotus creates safe platforms while her aura reveals the dark.</p>
 <h5>△ Nón Lá Mastery</h5><p>Purifying spirits grows shared Nón Lá Mastery through six Vietnamese-inspired skills. Use the special only when its gold energy bar is ready.</p>
@@ -224,9 +237,9 @@ NLA.I18N = {
 <h5>✦ Collectible benefits</h5><p>Every floating keepsake has a real power: lanterns and envelopes add Love; lotus petals and bánh chưng heal; bamboo leaves recharge Wind and Shield; stars and nón lá refill special energy; hoa đăng grants a short spirit ward. Open the ✦ Lantern Satchel during play for the full guide.</p>
 <h5>📱 Phones & touch controls</h5>
 <p>Put one thumb anywhere on the left side, slide to walk and lift it to stop. <span class="kbd">↑</span> jumps. The labelled powers change with your character. Tap <span class="kbd">△</span> for Nón Lá magic when its gold meter is full.</p>
-<p><span class="kbd">🤝</span> toggles holding hands when you stand close. <span class="kbd">🔄</span> swaps character in solo play. <span class="kbd">💗</span> sends a friendly heart emote only — it does not add Love.</p>
+<p>Tap <span class="kbd">🤝</span> to hold hands; HOLD it beside a fallen partner to revive them. <span class="kbd">🔄</span> swaps character in solo play. The glowing TWIN LANTERN button spends 35 Love on your shared attack. <span class="kbd">💗</span> remains a friendly emote.</p>
 <p>For two people on phones, use “Play Online Together”.</p>
-<h5>💗 Love icons</h5><p>The heart above the centre lantern is the Love Meter. Help each other, light key lanterns and collect both matching heart lanterns to grow it; every pair gives +5 Love. Its five levels unlock co-op benefits such as safer hand-holding, brighter shared light, a stronger shield and a joint wind jump.</p>`,
+<h5>💗 Love icons</h5><p>The heart above the centre lantern is the Love Meter. Helping, reviving, lighting key lanterns and matching heart pairs fill it. At 35 Love, press <span class="kbd">F</span> or the TWIN LANTERN button while both heroes are alive and near each other: it heals both, destroys enemy magic and releases a powerful shared wave. Spending Love never removes already unlocked Love Levels.</p>`,
     namesTitle: '✏️ Your names',
     intro: [
       'Long ago, in the ancient town of Hội An,\nevery lantern held a tiny warm flame of memory. 🏮',
@@ -285,6 +298,15 @@ NLA.I18N = {
   },
 
   vi: {
+    loveBurstName: 'SONG ĐĂNG', loveBurstHint: 'Dùng 35 Tình Yêu cho tuyệt kỹ phối hợp',
+    loveReady: 'SẴN SÀNG · F', loveBurstCast: '💞 Song Đăng Cộng Hưởng! Tình yêu hóa thành sức mạnh chung.',
+    loveBurstNeedCharge: 'Cần thêm {LOVE} Tình Yêu để dùng Song Đăng.', loveBurstTooFar: 'Hãy đến gần người ấy trước.',
+    loveBurstNeedPartner: 'Hãy cứu người ấy trước khi dùng tuyệt kỹ phối hợp.',
+    partnerDown: 'Người ấy đã ngã — đến gần và GIỮ nút Nắm Tay để cứu!',
+    partnerRescued: 'Đã cứu người ấy! Hồi hai Tim · +6 Tình Yêu',
+    rescuePrompt: 'GIỮ H / 🤝 ĐỂ CỨU', reviving: 'ĐANG GỌI ÁNH SÁNG TRỞ LẠI…',
+    progressSaved: 'Đã lưu hành trình — ghi nhớ vị trí thuyền và câu đố.',
+    checkpointRestored: 'Cả hai hồi phục tại điểm hành trình an toàn gần nhất.',
     playSolo: 'Chơi một mình', local2p: '2 người · Một bàn phím', online: 'Chơi Online cùng nhau 💞',
     wardrobe: 'Tủ đồ', howto: 'Cách chơi', back: 'Quay lại', select: 'Chọn',
     menuFoot: 'Một chuyện cổ tích Việt Nam ấm áp về tình yêu và ánh sáng ✨',
@@ -312,8 +334,8 @@ NLA.I18N = {
     charmsOwned: 'Bùa đã thu thập', rotate: 'Hãy xoay ngang điện thoại nhé 💛',
     touchMoveLeft: 'Đi sang trái', touchMoveRight: 'Đi sang phải', touchJump: 'Nhảy',
     touchWind: 'Gió', touchShield: 'Khiên', touchLight: 'Ánh sáng', touchLotus: 'Hoa sen',
-    touchHands: 'Nắm tay', touchSwitch: 'Đổi vai', touchHeart: 'Gửi biểu tượng tim', touchSpecial: 'Tuyệt kỹ Nón Lá',
-    touchGuide: 'Bên trái: kéo để đi. Chạm △ Nón Lá khi thanh vàng đầy. 💗 chỉ là biểu tượng thân thiện.',
+    touchHands: 'Nắm / Cứu', touchSwitch: 'Đổi vai', touchHeart: 'Gửi biểu tượng tim', touchSpecial: 'Tuyệt kỹ Nón Lá',
+    touchGuide: 'Kéo ở bất kỳ đâu bên trái để đi. GIỮ 🤝 cạnh người đã ngã để cứu. Dùng SONG ĐĂNG khi đủ 35 Tình Yêu.',
     spiritMonster: 'Linh hồn lạc lối', spiritMagic: 'linh thuật', hatMastery: 'Tinh thông Nón Lá', bossPhase: 'Giai đoạn',
     hatSkillName1: 'Viền Vàng', hatSkillName2: 'Trăng Sông Hồi Quy', hatSkillName3: 'Gió Tre Thánh Gióng',
     hatSkillName4: 'Hào Quang Hoa Sen', hatSkillName5: 'Ấn Rồng Trống Đồng', hatSkillName6: 'Bão Song Tinh',
@@ -426,7 +448,7 @@ NLA.I18N = {
 <h5>🕹 Bàn phím — Người chơi 2 ({GIRL})</h5>
 <p><span class="kbd">◀</span><span class="kbd">▶</span> di chuyển · <span class="kbd">▲</span> nhảy · <span class="kbd">O</span> Xung Ánh Sáng · <span class="kbd">P</span> Hoa Sen · <span class="kbd">I</span> tuyệt kỹ Nón Lá</p>
 <h5>💞 Cùng nhau</h5>
-<p><span class="kbd">H</span> nắm tay (đứng gần) · <span class="kbd">Tab</span> đổi vai (chơi một mình) · <span class="kbd">1</span><span class="kbd">2</span><span class="kbd">3</span> biểu cảm · <span class="kbd">Esc</span> tạm dừng</p>
+<p><span class="kbd">H</span> nắm tay; GIỮ cạnh người đã ngã để cứu · <span class="kbd">F</span> dùng 35 Tình Yêu thi triển Song Đăng · <span class="kbd">Tab</span> đổi vai (chơi một mình) · <span class="kbd">Esc</span> tạm dừng</p>
 <h5>🌀 {BOY}</h5><p>Gió gây sát thương và đẩy linh hồn, đồng thời đẩy đèn lồng, thuyền và thùng gỗ. Giữ Khiên để bảo vệ cả hai và phản phép trùm.</p>
 <h5>✨ {GIRL}</h5><p>Ánh sáng gây sát thương bóng tối, thắp đèn và chữa lành đồ vỡ. Hoa Sen tạo bệ an toàn và hào quang soi rõ bóng tối.</p>
 <h5>△ Tinh thông Nón Lá</h5><p>Thanh tẩy linh hồn giúp tuyệt kỹ Nón Lá phát triển qua sáu cấp lấy cảm hứng Việt Nam. Chỉ dùng được khi thanh năng lượng vàng đã đầy.</p>
@@ -435,9 +457,9 @@ NLA.I18N = {
 <h5>✦ Lợi ích vật phẩm</h5><p>Mỗi kỷ vật bay đều có công dụng: đèn và lì xì tăng Tình Yêu; cánh sen và bánh chưng hồi máu; lá tre hồi Gió và Khiên; sao và nón lá nạp tuyệt kỹ; hoa đăng cho hộ thể ngắn. Mở ✦ Túi Đèn Kỷ Vật khi chơi để xem đầy đủ.</p>
 <h5>📱 Điện thoại & cảm ứng</h5>
 <p>Đặt ngón tay ở bất kỳ đâu bên trái, kéo để đi và nhấc tay để dừng. <span class="kbd">↑</span> để nhảy. Các nút phép đổi theo nhân vật. Chạm <span class="kbd">△</span> để dùng Nón Lá khi thanh vàng đầy.</p>
-<p><span class="kbd">🤝</span> bật/tắt nắm tay khi đứng gần nhau. <span class="kbd">🔄</span> đổi nhân vật khi chơi một mình. <span class="kbd">💗</span> chỉ gửi biểu tượng trái tim thân thiện — không tăng Tình Yêu.</p>
+<p>Chạm <span class="kbd">🤝</span> để nắm tay; GIỮ nút này cạnh người đã ngã để cứu. <span class="kbd">🔄</span> đổi nhân vật khi chơi một mình. Nút SONG ĐĂNG phát sáng dùng 35 Tình Yêu cho tuyệt kỹ chung. <span class="kbd">💗</span> vẫn là biểu cảm thân thiện.</p>
 <p>Hai người chơi trên điện thoại hãy dùng “Chơi Online cùng nhau”.</p>
-<h5>💗 Biểu tượng Tình Yêu</h5><p>Trái tim trên chiếc đèn giữa màn hình là Thang Tình Yêu. Hãy giúp nhau, thắp đèn chính và nhặt đủ hai đèn tim cùng cặp để tăng thang; mỗi cặp được +5 Tình Yêu. Năm cấp sẽ mở lợi ích phối hợp như nắm tay an toàn hơn, ánh sáng chung sáng hơn, khiên mạnh hơn và cú nhảy gió cùng nhau.</p>`,
+<h5>💗 Biểu tượng Tình Yêu</h5><p>Trái tim trên chiếc đèn giữa màn hình là Thang Tình Yêu. Giúp đỡ, cứu nhau, thắp đèn chính và ghép cặp đèn tim sẽ nạp thang. Khi đủ 35, nhấn <span class="kbd">F</span> hoặc nút SONG ĐĂNG lúc cả hai còn sống và ở gần nhau: kỹ năng hồi máu cả hai, xóa phép địch và tung sóng phối hợp cực mạnh. Tiêu Tình Yêu không làm mất cấp đã mở.</p>`,
     namesTitle: '✏️ Tên của hai bạn',
     intro: [
       'Ngày xưa, ở phố cổ Hội An,\nmỗi chiếc đèn lồng giữ một ngọn lửa ký ức nhỏ ấm áp. 🏮',

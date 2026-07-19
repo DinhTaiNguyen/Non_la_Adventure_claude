@@ -81,8 +81,9 @@
     }
 
     nearest(world) {
-      let best = world.players[0], dist = Infinity;
-      for (const pl of world.players) {
+      const living = world.players.filter(pl => !pl.downed);
+      let best = living[0] || world.players[0], dist = Infinity;
+      for (const pl of living) {
         const d = U.dist(this.x, this.y, pl.x, pl.y - 30);
         if (d < dist) { dist = d; best = pl; }
       }
@@ -656,6 +657,7 @@
       const after = rankNow();
       if (role === 'final') NLA.ui.toast(NLA.t('bossPurified').replace('{NAME}', this.byId[id] ? this.byId[id].displayName() : NLA.t('spiritMonster')), 5200);
       else if (role === 'guardian') NLA.ui.toast(NLA.t('guardianPurified'), 3600);
+      if (role === 'guardian' && world.captureProgressCheckpoint) world.captureProgressCheckpoint('guardian');
       if (after > before) {
         for (const pl of world.players) pl.hatEnergy = 100;
         NLA.ui.toast(NLA.t('hatMasteryUp').replace('{RANK}', after).replace('{SKILL}', NLA.t('hatSkillName' + after)), 5600);

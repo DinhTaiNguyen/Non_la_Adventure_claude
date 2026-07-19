@@ -10,7 +10,7 @@
 <title>Nón Lá Love Adventure: Lanterns of Hội An</title>
 <meta name="description" content="A cozy romantic co-op adventure through a magical Hội An lantern festival. Play together, restore the light!">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏮</text></svg>">
-<link rel="stylesheet" href="css/style.css?v=8">
+<link rel="stylesheet" href="css/style.css?v=9">
 </head>
 <body>
 <div id="app">
@@ -51,6 +51,12 @@
     <button id="btn-pause" class="icon-btn" aria-label="pause">⏸</button>
   </div>
 
+  <button id="btn-love" class="love-action hidden" type="button" aria-label="Twin Lantern collaboration move">
+    <img src="assets/art/ui-kit/love.webp" alt="" aria-hidden="true" decoding="async">
+    <span><b id="love-action-label">TWIN LANTERN</b><small id="love-action-charge">0 / 35</small></span>
+    <i>F</i>
+  </button>
+
   <!-- ===== Main menu ===== -->
   <div id="menu" class="overlay">
     <div class="menu-card">
@@ -85,12 +91,12 @@
       <h3 data-i18n="pickChar">Choose your character</h3>
       <div class="pick-row">
         <button class="pick-card" id="pick-boy">
-          <img class="pick-portrait" src="assets/art/ui/portrait-boy.webp" alt="" aria-hidden="true" loading="lazy" decoding="async">
+          <img class="pick-portrait sheet-portrait" src="assets/art/ui/portrait-boy-sheet.webp" alt="" aria-hidden="true" loading="lazy" decoding="async">
           <span class="name-boy">Joku</span>
           <small data-i18n="boyDesc">Wind & Shield</small>
         </button>
         <button class="pick-card" id="pick-girl">
-          <img class="pick-portrait" src="assets/art/ui/portrait-girl.webp" alt="" aria-hidden="true" loading="lazy" decoding="async">
+          <img class="pick-portrait sheet-portrait" src="assets/art/ui/portrait-girl-sheet.webp" alt="" aria-hidden="true" loading="lazy" decoding="async">
           <span class="name-girl">Jolie</span>
           <small data-i18n="girlDesc">Light & Lotus</small>
         </button>
@@ -120,11 +126,11 @@
       <div id="online-choose">
         <div class="pick-row">
           <button class="pick-card small" id="online-pick-boy">
-            <img class="pick-portrait small" src="assets/art/ui/portrait-boy.webp" alt="" aria-hidden="true" loading="lazy" decoding="async">
+            <img class="pick-portrait small sheet-portrait" src="assets/art/ui/portrait-boy-sheet.webp" alt="" aria-hidden="true" loading="lazy" decoding="async">
             <span class="name-boy">Joku</span>
           </button>
           <button class="pick-card small" id="online-pick-girl">
-            <img class="pick-portrait small" src="assets/art/ui/portrait-girl.webp" alt="" aria-hidden="true" loading="lazy" decoding="async">
+            <img class="pick-portrait small sheet-portrait" src="assets/art/ui/portrait-girl-sheet.webp" alt="" aria-hidden="true" loading="lazy" decoding="async">
             <span class="name-girl">Jolie</span>
           </button>
         </div>
@@ -251,19 +257,19 @@
 </div>
 
 <script src="js/deployment-config.js?v=1" defer></script>
-<script src="js/config.js?v=9" defer></script>
-<script src="assets/art/manifest.js?v=2" defer></script>
-<script src="js/draw.js?v=5" defer></script>
+<script src="js/config.js?v=10" defer></script>
+<script src="assets/art/manifest.js?v=3" defer></script>
+<script src="js/draw.js?v=6" defer></script>
 <script src="js/audio.js?v=3" defer></script>
-<script src="js/input.js?v=6" defer></script>
-<script src="js/levels.js?v=4" defer></script>
+<script src="js/input.js?v=7" defer></script>
+<script src="js/levels.js?v=5" defer></script>
 <script src="js/chars.js?v=2" defer></script>
 <script src="js/bg.js?v=4" defer></script>
-<script src="js/entities.js?v=8" defer></script>
-<script src="js/combat.js?v=4" defer></script>
-<script src="js/net.js?v=6" defer></script>
-<script src="js/game.js?v=10" defer></script>
-<script src="js/ui.js?v=9" defer></script>
+<script src="js/entities.js?v=9" defer></script>
+<script src="js/combat.js?v=5" defer></script>
+<script src="js/net.js?v=7" defer></script>
+<script src="js/game.js?v=11" defer></script>
+<script src="js/ui.js?v=10" defer></script>
 <script src="js/main.js?v=4" defer></script>
 </body>
 </html>

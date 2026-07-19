@@ -68,6 +68,8 @@
     updateRelayNote();
     $('btn-items').setAttribute('aria-label', NLA.t('itemCodexTitle'));
     $('btn-items').title = NLA.t('itemCodexTitle');
+    $('love-action-label').textContent = NLA.t('loveBurstName');
+    $('btn-love').setAttribute('aria-label', NLA.t('loveBurstHint'));
     if (!$('level-panel').classList.contains('hidden')) openLevelSelect();
   };
 
@@ -246,7 +248,7 @@
     NLA.draw.particles.clear();
     NLA.audio.setTheme('menu');
     NLA.audio.setIntensity(0.3);
-    hide('topbar'); hide('touch-ui'); hide('touch-guide');
+    hide('topbar'); hide('btn-love'); hide('touch-ui'); hide('touch-guide');
     show('menu');
     game._menuBuilt = false;
   };
@@ -283,6 +285,7 @@
     hideAllPanels();
     NLA.audio.unlock();
     show('topbar');
+    show('btn-love');
     if (NLA.input.isTouchDevice && game.mode !== 'local') {
       show('touch-ui');
       UI.updateTouchIcons();
@@ -538,6 +541,15 @@
     $('tc-switch-btn').setAttribute('aria-label', NLA.t('touchSwitch'));
     $('tc-emote-btn').setAttribute('aria-label', NLA.t('touchHeart'));
     $('tc-switch-btn').style.display = game.mode === 'solo' ? '' : 'none';
+  };
+
+  UI.updateLoveAction = function (love, ready, unavailable) {
+    const btn = $('btn-love');
+    if (!btn) return;
+    $('love-action-charge').textContent = `${Math.floor(love)} / ${NLA.CONST.LOVE_BURST_COST}`;
+    btn.classList.toggle('ready', !!ready);
+    btn.classList.toggle('unavailable', !!unavailable);
+    btn.setAttribute('aria-disabled', String(!!unavailable));
   };
 
   /* ---------------- character preview canvases ---------------- */

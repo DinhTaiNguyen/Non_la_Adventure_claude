@@ -130,7 +130,7 @@
       { k: 'ropegate', x: 3300, group: 'c2', n: 3, id: 'r2' },
       { k: 'stone', x: 4340, id: 's1', key: true },
       { k: 'memory', x: 4430, idx: 1 },
-      { k: 'checkpoint', x: 4530 },
+      { k: 'checkpoint', x: 4530, boatX: 4430 },
       { k: 'heart', x: 4230, y: 730, pair: 1 }, { k: 'heart', x: 4590, y: 730, pair: 1 },
       { k: 'rocks', x: 5100 },
       { k: 'candle', x: 5400, group: 'c3' }, { k: 'candle', x: 5490, group: 'c3' }, { k: 'candle', x: 5580, group: 'c3' },

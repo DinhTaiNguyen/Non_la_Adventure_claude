@@ -18,6 +18,7 @@
       this.walkPhase = 0; this.blinkT = Math.random() * 3;
       this.landT = 0; this.stun = 0; this.dim = 0;
       this.maxHp = 4; this.hp = this.maxHp; this.invuln = 0;
+      this.downed = false; this.reviveProgress = 0; this.downedT = 0;
       this.cd1 = 0; this.cd2 = 0;
       this.hatEnergy = 100; this.hatCd = 0;
       this.shieldMeter = C.SHIELD_MAX; this.shieldOn = false;
@@ -48,6 +49,19 @@
       this.powerFx = Math.max(0, this.powerFx - dt * 2);
       this.emoteT = Math.max(0, this.emoteT - dt);
       this.wings = Math.max(0, this.wings - dt * 1.2);
+
+      if (this.downed) {
+        this.downedT += dt;
+        this.vx *= Math.pow(.04, dt); this.shieldOn = false;
+        this.channel = false; this.channelLight = false;
+        if (this.remote) this.updateRemote(dt);
+        else {
+          this.vy = Math.min(1100, this.vy + C.GRAVITY * dt);
+          this.moveAndCollide(dt, world);
+        }
+        this.prev = {};
+        return;
+      }
 
       if (this.remote) { this.updateRemote(dt); return; }
       const stunned = this.stun > 0;
@@ -140,6 +154,14 @@
     draw(ctx, t, world) {
       const g = NLA.game;
       const loveLv = g ? g.loveLevel : 0;
+      ctx.save();
+      if (this.downed) {
+        ctx.globalAlpha = .72;
+        ctx.translate(this.x, this.y - 5);
+        ctx.rotate(this.who === 'boy' ? -.72 : .72);
+        ctx.scale(.88, .88);
+        ctx.translate(-this.x, -this.y);
+      }
       NLA.chars.drawChar(ctx, {
         x: this.x, y: this.y, face: this.face, who: this.who,
         pal: NLA.costumeFor(this.who), t,
@@ -158,6 +180,7 @@
         blink: this.blinkT,
         celebrating: g && g.celebrating,
       });
+      ctx.restore();
       /* name tag above the hat (hidden while emoting) */
       if (g && this.emoteT <= 0 && !g.cutscene) {
         const nm = g.nameFor ? g.nameFor(this.who) : '';
@@ -223,6 +246,11 @@
     draw(ctx, t) {
       const x = this.x, y = this.y;
       ctx.save();
+      if (!this.brazier && !this.broken && D().alphaSprite(ctx, 'prop_stone-lantern', x, y - 48, 86, 112, this.lit ? 1 : .64)) {
+        if (this.lit) D().glow(ctx, 'warm', x, y - 63, 82 + Math.sin(t * 4) * 5, .88);
+        if (this.key && !this.lit) D().sparkle(ctx, x, y - 110, 6, '#ffe9a3', .8, t);
+        ctx.restore(); return;
+      }
       if (this.brazier) {
         /* bronze brazier bowl on legs */
         ctx.fillStyle = '#6b4a26';
@@ -398,6 +426,7 @@
     draw(ctx, t) {
       const sink = this.openT * 170;
       const topY = 706 + sink;
+      if (D().alphaSprite(ctx, 'prop_rope-gate', this.x, topY + 82, 150, 205, .92)) return;
       /* poles */
       ctx.strokeStyle = '#5a4030';
       ctx.lineWidth = 7;
@@ -465,6 +494,16 @@
     }
     draw(ctx) {
       const r = this.rect();
+      if (D().alphaSprite(ctx, 'prop_helper-crate', this.x, r.y + r.h / 2, r.w * 1.28, r.h * 1.3, 1)) {
+        if (this.helper) {
+          ctx.fillStyle = '#fff0b3'; ctx.font = 'bold 18px sans-serif'; ctx.textAlign = 'center';
+          ctx.fillText('↑', this.x, r.y - 7);
+        } else if (!this.fixed) {
+          ctx.fillStyle = 'rgba(91,226,255,.9)'; ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'center';
+          ctx.fillText('◇', this.x, r.y + r.h * .6);
+        }
+        return;
+      }
       ctx.fillStyle = '#8a6238';
       D().rr(ctx, r.x, r.y, r.w, r.h, 4); ctx.fill();
       ctx.strokeStyle = '#5d3f22';
@@ -866,7 +905,7 @@
 
   class Checkpoint {
     constructor(o, lv) {
-      this.x = o.x; this.y = lv.groundY; this.done = false;
+      this.x = o.x; this.y = lv.groundY; this.done = false; this.boatX = o.boatX;
     }
     update(dt, world) {
       if (this.done) return;
@@ -875,15 +914,26 @@
       if (both && world.holdingHands) {
         this.done = true;
         NLA.audio.sfx('bell');
-        world.setCheckpoint(this.x);
+        world.setCheckpoint(this.x, this);
         world.addLove(NLA.LOVE.checkpoint, this.x, this.y - 120);
         P().burst(this.x, this.y - 100, 20, { kind: 'heart', color: '#ff9db5', speed: 90, life: 1.4, size: 5, grav: -40 });
-        world.emitEvent('checkpoint', { x: this.x });
+        world.emitEvent('checkpoint', { x: this.x, boatX: this.boatX });
       }
     }
     draw(ctx, t) {
       /* wooden arch with bells */
       ctx.save();
+      if (D().alphaSprite(ctx, 'prop_checkpoint-arch', this.x, this.y - 92, 190, 205, this.done ? 1 : .78)) {
+        if (this.done) {
+          D().glow(ctx, 'pink', this.x, this.y - 142, 72, .55 + Math.sin(t * 2) * .12);
+          D().artSprite(ctx, 'coop_checkpoint-spiral', this.x, this.y - 94, 145, 145, .68, t * .15);
+        } else {
+          ctx.globalAlpha = .65 + Math.sin(t * 3) * .25;
+          ctx.font = '20px sans-serif'; ctx.textAlign = 'center'; ctx.fillStyle = '#fff3d2';
+          ctx.fillText('🤝', this.x, this.y - 194);
+        }
+        ctx.restore(); return;
+      }
       ctx.strokeStyle = '#6b4530';
       ctx.lineWidth = 9; ctx.lineCap = 'round';
       ctx.beginPath();
@@ -993,6 +1043,10 @@
     draw(ctx, t) {
       const y = this.bobY(t);
       ctx.save();
+      if (D().alphaSprite(ctx, 'prop_river-boat', this.x + this.w / 2, y + 6, this.w * 1.34, 126, 1)) {
+        D().lantern(ctx, this.x + this.w - 4, y - 34, 18, 22, '#e8a13c', true, t);
+        ctx.restore(); return;
+      }
       /* hull */
       const grad = ctx.createLinearGradient(0, y, 0, y + 44);
       grad.addColorStop(0, '#8a5c34');
@@ -1301,6 +1355,10 @@
     constructor(o, lv) { this.x = o.x; this.tip = o.tip; this.y = lv.groundY; }
     update() {}
     draw(ctx, t) {
+      if (D().alphaSprite(ctx, 'prop_quest-sign', this.x, this.y - 61, 122, 146, .96)) {
+        D().glow(ctx, 'warm', this.x, this.y - 88, 42, .32 + Math.sin(t * 2) * .08);
+        return;
+      }
       /* small lantern post with sparkle — tip text drawn by HUD when near */
       ctx.strokeStyle = '#5d4432'; ctx.lineWidth = 4;
       ctx.beginPath(); ctx.moveTo(this.x, this.y); ctx.lineTo(this.x, this.y - 46); ctx.stroke();

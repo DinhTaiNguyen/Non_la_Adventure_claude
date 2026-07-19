@@ -11,8 +11,8 @@
   let movementStick = null;
   const I = {
     keys,
-    touch: { left: false, right: false, jump: false, pow1: false, pow2: false, special: false },
-    swapPressed: false, emotePressed: 0, handsPressedTouch: false,
+    touch: { left: false, right: false, jump: false, pow1: false, pow2: false, special: false, hands: false },
+    swapPressed: false, emotePressed: 0, handsPressedTouch: false, lovePressed: false,
     isTouchDevice: ('ontouchstart' in window) || (navigator.maxTouchPoints > 0),
   };
 
@@ -23,6 +23,7 @@
     if (e.code === 'Digit1') I.emotePressed = 1;
     if (e.code === 'Digit2') I.emotePressed = 2;
     if (e.code === 'Digit3') I.emotePressed = 3;
+    if (e.code === 'KeyF') I.lovePressed = true;
     if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault();
   });
   window.addEventListener('keyup', (e) => { keys[e.code] = false; });
@@ -71,11 +72,12 @@
 
   function resetTouch() {
     const t = I.touch;
-    t.left = t.right = t.jump = t.pow1 = t.pow2 = t.special = false;
+    t.left = t.right = t.jump = t.pow1 = t.pow2 = t.special = t.hands = false;
     resetMovement();
     I.swapPressed = false;
     I.emotePressed = 0;
     I.handsPressedTouch = false;
+    I.lovePressed = false;
     for (const binding of touchBindings) {
       binding.pointers.clear();
       binding.el.classList.remove('pressed');
@@ -101,7 +103,7 @@
       jump: !!keys.ArrowUp,
       pow1: !!(keys.KeyO || keys.Comma), pow2: !!(keys.KeyP || keys.Period),
       special: !!keys.KeyI,
-      hands: !!keys.KeyH,
+      hands: !!(keys.KeyH || t.hands),
     };
   };
   /* merged (solo / touch): both key groups + touch buttons drive the active char */
@@ -121,6 +123,7 @@
   I.consumeSwap = function () { const v = I.swapPressed; I.swapPressed = false; return v; };
   I.consumeEmote = function () { const v = I.emotePressed; I.emotePressed = 0; return v; };
   I.consumeHandsTouch = function () { const v = I.handsPressedTouch; I.handsPressedTouch = false; return v; };
+  I.consumeLove = function () { const v = I.lovePressed; I.lovePressed = false; return v; };
 
   /* --- touch buttons wiring ---
      Pointer Events support true multi-touch while avoiding the duplicate
@@ -214,6 +217,7 @@
     bindHeld('tc-pow1-btn', 'pow1');
     bindHeld('tc-pow2-btn', 'pow2');
     bindHeld('tc-special-btn', 'special');
+    bindHeld('tc-hands-btn', 'hands');
 
     const tap = (id, fn) => {
       const el = document.getElementById(id);
@@ -242,8 +246,8 @@
       touchBindings.push({ el, pointers, release });
     };
     tap('tc-switch-btn', () => { I.swapPressed = true; });
-    tap('tc-hands-btn', () => { I.handsPressedTouch = true; });
     tap('tc-emote-btn', () => { I.emotePressed = 1; });
+    tap('btn-love', () => { I.lovePressed = true; });
 
     const releaseLostPointer = (e) => {
       for (const binding of touchBindings) binding.release(e, false);
