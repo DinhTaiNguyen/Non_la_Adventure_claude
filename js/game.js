@@ -267,8 +267,24 @@
         this.keyLit = this.countKeyLit();
         this.addLove(NLA.LOVE.lantern, o.x, (o.y || 800) - 80);
         NLA.audio.setIntensity(Math.min(1, 0.3 + this.loveLevel * 0.1 + (this.keyLit / Math.max(1, this.level.required)) * 0.3));
+      } else {
+        /* every lantern matters: bonus lanterns pay out charms + a little love */
+        this.grantBonusLantern(o);
       }
       this.emitEvent('lantern', { id: o.id });
+    }
+    grantBonusLantern(o) {
+      this.bonusCharms(2, o.x, (o.y || this.level.groundY) - 70);
+      this.addLove(1, o.x, (o.y || this.level.groundY) - 90);
+      this.pickupNotice = { text: NLA.t('bonusLantern'), color: '#ffd76b', life: 2.1 };
+    }
+    bonusCharms(n, x, y) {
+      this.levelCharms += n;
+      NLA.save.data.charms += n;
+      NLA.save.store();
+      if (x !== undefined) {
+        P().burst(x, y, 5 + n * 2, { kind: 'star', color: '#ffd76b', speed: 85, life: 0.8, size: 3.5 });
+      }
     }
     onCandleLit(o) { this.emitEvent('candle', { id: o.id }); }
     countKeyLit() {
@@ -561,6 +577,19 @@
       if (o instanceof E.Statue) return !o.healed ? { x: o.x, y: o.y - 40 } : null;
       if (o instanceof E.Villager) return !o.lit ? { x: o.x + 42, y: o.y - 76 } : null;
       return null;
+    }
+
+    /* every KEY lantern that still needs light — the level's objectives */
+    objectiveTargets() {
+      const out = [];
+      for (const o of this.objects) {
+        if (!o.key) continue;
+        if (o.lit || (o instanceof E.Statue && o.healed)) continue;
+        if (o instanceof E.WireLantern) { const b = o.bob(); out.push({ x: b.x, y: b.y - 18, o }); }
+        else if (o instanceof E.Villager) out.push({ x: o.x + 42, y: o.y - 76, o });
+        else out.push({ x: o.x, y: (o.y || this.level.groundY) - 60, o });
+      }
+      return out;
     }
 
     doPulse(x, y, big, fromNet) {
@@ -1197,7 +1226,12 @@
       const o = d.id !== undefined ? this.byId[d.id] : null;
       try {
         switch (k) {
-          case 'lantern': if (o && !o.lit) { o.lit = true; this.keyLit = this.countKeyLit(); NLA.audio.sfx('lanternLit'); } break;
+          case 'lantern':
+            if (o && !o.lit) {
+              o.lit = true; this.keyLit = this.countKeyLit(); NLA.audio.sfx('lanternLit');
+              if (!o.key) this.grantBonusLantern(o);
+            }
+            break;
           case 'candle': if (o && !o.lit) { o.lit = true; } break;
           case 'heal': if (o) o.broken = false; break;
           case 'gust': this.doGust(d.x, d.y, d.dir, true); break;
@@ -1224,7 +1258,7 @@
             if (fallen) this.revivePlayer(fallen, rescuer, true);
             break;
           }
-          case 'dispel': if (o && !o.gone) { o.gone = true; NLA.audio.sfx('dispel'); } break;
+          case 'dispel': if (o && !o.gone) { o.gone = true; NLA.audio.sfx('dispel'); this.bonusCharms(1, o.x, o.y); } break;
           case 'collect': if (o && !o.taken) { o.taken = true; this.onCollect(o); NLA.audio.sfx('chime', 2); } break;
           case 'heartTaken': if (o && !o.taken) { o.taken = true; this.onHeartTaken(o); } break;
           case 'culture': if (o && !o.seen) this.discoverCulture(o, true); break;
@@ -1426,9 +1460,15 @@
         if (p.x + p.w >= drawLeft && p.x <= drawRight) this.drawPlatform(ctx, p, t);
       }
 
+      /* objective beacons behind the lanterns they mark */
+      this.drawObjectiveBeacons(ctx, t, drawLeft, drawRight);
+
       /* objects */
       for (const o of this.objects) if (inDrawRange(o)) o.draw && o.draw(ctx, t, this);
       for (const c of this.collectibles) if (inDrawRange(c)) c.draw(ctx, t);
+
+      /* "you can light this now" rings on top of their targets */
+      this.drawLightableHighlights(ctx, t, drawLeft, drawRight);
 
       /* players + hand link */
       if (this.holdingHands) NLA.chars.drawHandLink(ctx, this.players[0], this.players[1], t);
@@ -1604,6 +1644,76 @@
           ctx.moveTo(x + 4, p.y + 2); ctx.quadraticCurveTo(x + 5, p.y - 6, x + 10, p.y - 7);
           ctx.stroke();
         }
+      }
+    }
+
+    /* golden light pillars over every key lantern that still needs light —
+       the player should never wonder where to go next */
+    drawObjectiveBeacons(ctx, t, drawLeft, drawRight) {
+      if (this.state !== 'play' || this.cutscene) return;
+      for (const m of this.objectiveTargets()) {
+        if (m.x < drawLeft - 80 || m.x > drawRight + 80) continue;
+        const pulse = 0.5 + Math.sin(t * 2.2 + m.x * 0.01) * 0.22;
+        /* sky beam */
+        const top = Math.max(this.cam.y - 40, m.y - 620);
+        const grad = ctx.createLinearGradient(0, top, 0, m.y);
+        grad.addColorStop(0, 'rgba(255,214,120,0)');
+        grad.addColorStop(0.55, `rgba(255,214,120,${0.05 + pulse * 0.05})`);
+        grad.addColorStop(1, `rgba(255,224,150,${0.13 + pulse * 0.1})`);
+        ctx.fillStyle = grad;
+        const w = 46 + pulse * 8;
+        ctx.beginPath();
+        ctx.moveTo(m.x - w * 0.28, top);
+        ctx.lineTo(m.x + w * 0.28, top);
+        ctx.lineTo(m.x + w * 0.5, m.y);
+        ctx.lineTo(m.x - w * 0.5, m.y);
+        ctx.fill();
+        /* base glow + slow halo ring */
+        NLA.draw.glow(ctx, 'warm', m.x, m.y, 46 + pulse * 14, 0.28 + pulse * 0.18);
+        ctx.strokeStyle = `rgba(255,220,150,${0.35 + pulse * 0.3})`;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(m.x, m.y, 26 + Math.sin(t * 2.2) * 4, 0, 6.283);
+        ctx.stroke();
+        /* bobbing golden chevron high above, readable from far away */
+        const ay = m.y - 128 + Math.sin(t * 3) * 7;
+        ctx.fillStyle = 'rgba(255,224,150,0.95)';
+        ctx.beginPath();
+        ctx.moveTo(m.x, ay + 12);
+        ctx.lineTo(m.x - 11, ay);
+        ctx.lineTo(m.x - 4, ay);
+        ctx.lineTo(m.x - 4, ay - 8);
+        ctx.lineTo(m.x + 4, ay - 8);
+        ctx.lineTo(m.x + 4, ay);
+        ctx.lineTo(m.x + 11, ay);
+        ctx.closePath();
+        ctx.fill();
+        NLA.draw.lantern(ctx, m.x, ay - 42, 20, 24, '#e8a13c', true, t);
+        /* rising motes */
+        if (Math.random() < 0.09) {
+          P().spawn({ x: m.x + U.rand(-16, 16), y: m.y + U.rand(-6, 6), vx: 0, vy: U.rand(-46, -26), life: 1.3, size: 2.2, kind: 'spark', color: '#ffe9a3', glow: 'warm' });
+        }
+      }
+    }
+
+    /* bright ring when the girl is close enough to light something RIGHT NOW */
+    drawLightableHighlights(ctx, t, drawLeft, drawRight) {
+      if (this.state !== 'play' || this.cutscene || !this.girl) return;
+      const gx = this.girl.x, gy = this.girl.y - 30;
+      for (const o of this.objects) {
+        const lp = this.lightPoint(o);
+        if (!lp || lp.x < drawLeft - 40 || lp.x > drawRight + 40) continue;
+        if (U.dist(gx, gy, lp.x, lp.y) > C.LIGHT_RANGE + 5) continue;
+        const ring = 20 + Math.sin(t * 5) * 3.5;
+        ctx.strokeStyle = 'rgba(255,246,214,0.9)';
+        ctx.lineWidth = 2.5;
+        ctx.setLineDash([7, 6]);
+        ctx.lineDashOffset = -t * 26;
+        ctx.beginPath();
+        ctx.arc(lp.x, lp.y, ring, 0, 6.283);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        NLA.draw.sparkle(ctx, lp.x + ring * 0.85, lp.y - ring * 0.85, 5, '#fff2c0', 0.9, t * 2);
       }
     }
 
@@ -1801,6 +1911,34 @@
       ctx.fillStyle = '#ffe9b3';
       ctx.fillText(`🏮 ${this.keyLit} / ${this.level.required}`, lx, ly + 88);
       NLA.draw.artSprite(ctx, 'ui_quest', lx - 68, ly + 83, 30, 30, .68);
+
+      /* --- edge arrow toward the nearest off-screen key lantern --- */
+      if (this.state === 'play' && !this.cutscene) {
+        const mine = this.players.find(p => !p.remote) || this.players[0];
+        let best = null, bd = Infinity;
+        for (const m of this.objectiveTargets()) {
+          const d = Math.abs(m.x - mine.x);
+          if (d < bd) { bd = d; best = m; }
+        }
+        if (best) {
+          const sx = best.x - this.cam.x;
+          const off = sx < -30 ? -1 : (sx > vw + 30 ? 1 : 0);
+          if (off !== 0) {
+            const ex = off < 0 ? 22 : vw - 22;
+            const eyy = 150 + Math.sin(t * 3) * 5;
+            ctx.save();
+            ctx.fillStyle = 'rgba(24,12,40,0.8)';
+            NLA.draw.rr(ctx, ex - (off < 0 ? 0 : 96), eyy - 20, 96, 40, 12); ctx.fill();
+            ctx.strokeStyle = 'rgba(255,214,120,0.75)'; ctx.lineWidth = 1.5;
+            NLA.draw.rr(ctx, ex - (off < 0 ? 0 : 96), eyy - 20, 96, 40, 12); ctx.stroke();
+            const tx = ex + (off < 0 ? 48 : -48);
+            ctx.font = 'bold 15px sans-serif'; ctx.textAlign = 'center';
+            ctx.fillStyle = '#ffe9b3';
+            ctx.fillText(`${off < 0 ? '◀' : ''} 🏮 ${Math.max(1, Math.round(bd / 100))} ${off > 0 ? '▶' : ''}`, tx, eyy + 5);
+            ctx.restore();
+          }
+        }
+      }
 
       /* --- charms (bottom-left) --- */
       ctx.textAlign = 'left';

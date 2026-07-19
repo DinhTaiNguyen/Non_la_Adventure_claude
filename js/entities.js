@@ -1504,6 +1504,8 @@
         P().spawn({ x: this.x, y: this.y, vx: U.rand(-60, 60), vy: U.rand(-80, -20), life: 2.5, size: 2.5, kind: 'firefly' });
       }
       world.addLove(NLA.LOVE.dispel, this.x, this.y);
+      /* freed spirits leave a charm behind — purifying them is always worth it */
+      if (world.bonusCharms) world.bonusCharms(1, this.x, this.y);
       world.emitEvent('dispel', { id: this.id });
     }
     update(dt, world) {
