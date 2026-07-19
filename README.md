@@ -54,7 +54,9 @@ partner (press `Tab` to swap characters).
 | Power | `E` — wind gust | `O` — light pulse |
 | 2nd power | hold `Q` — shield | `P` — grow lotus |
 
-**Together:** `H` hold hands · `Tab` swap (solo) · `1/2/3` emotes · `Esc` pause.
+**Together:** walk close and your bond forms by itself 💗 · hold `H` beside a
+fallen partner to revive them (at Love Lv4: hold `H` + jump = Love Wind Jump) ·
+`Tab` swap (solo) · `1/2/3` emotes · `Esc` pause.
 On phones, drag anywhere on the left side of the screen to walk left or right;
 the action buttons stay under your right thumb.
 

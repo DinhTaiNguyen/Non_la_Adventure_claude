@@ -929,8 +929,7 @@
           D().artSprite(ctx, 'coop_checkpoint-spiral', this.x, this.y - 94, 145, 145, .68, t * .15);
         } else {
           ctx.globalAlpha = .65 + Math.sin(t * 3) * .25;
-          ctx.font = '20px sans-serif'; ctx.textAlign = 'center'; ctx.fillStyle = '#fff3d2';
-          ctx.fillText('🤝', this.x, this.y - 194);
+          D().heart(ctx, this.x, this.y - 200, 9, '#ffb0c8', 1);
         }
         ctx.restore(); return;
       }
@@ -964,9 +963,7 @@
         D().heart(ctx, this.x, this.y - 148, 8, '#ff8fae', 0.9);
       } else {
         ctx.globalAlpha = 0.5 + Math.sin(t * 3) * 0.25;
-        ctx.font = '15px sans-serif'; ctx.textAlign = 'center';
-        ctx.fillStyle = '#ffd7e8';
-        ctx.fillText('🤝', this.x, this.y - 185);
+        D().heart(ctx, this.x, this.y - 190, 8, '#ffd7e8', 1);
         ctx.globalAlpha = 1;
       }
       ctx.restore();

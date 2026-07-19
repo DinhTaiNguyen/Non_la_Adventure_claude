@@ -82,9 +82,9 @@ NLA.I18N = {
     loveReady: 'READY · F', loveBurstCast: '💞 Twin Lantern Resonance! Love becomes shared power.',
     loveBurstNeedCharge: 'Build {LOVE} more Love to use Twin Lantern.', loveBurstTooFar: 'Move closer to your partner first.',
     loveBurstNeedPartner: 'Revive your partner before using the collaboration move.',
-    partnerDown: 'Your partner is down — stand close and HOLD Hands to revive!',
+    partnerDown: 'Your partner is down — stand close and HOLD 💞 (H) to revive!',
     partnerRescued: 'Partner rescued! Two Hearts restored · +6 Love',
-    rescuePrompt: 'HOLD H / 🤝 TO RESCUE', reviving: 'RESTORING THEIR LIGHT…',
+    rescuePrompt: 'HOLD H / 💞 TO RESCUE', reviving: 'RESTORING THEIR LIGHT…',
     progressSaved: 'Journey saved — boat and puzzle positions remembered.',
     checkpointRestored: 'Both heroes restored at the last safe journey point.',
     playSolo: 'Play Solo', local2p: '2 Players · One Keyboard', online: 'Play Online Together 💞',
@@ -114,8 +114,8 @@ NLA.I18N = {
     charmsOwned: 'Charms collected', rotate: 'Please rotate your phone to landscape 💛',
     touchMoveLeft: 'Move left', touchMoveRight: 'Move right', touchJump: 'Jump',
     touchWind: 'Wind', touchShield: 'Shield', touchLight: 'Light', touchLotus: 'Lotus',
-    touchHands: 'Hold / Rescue', touchSwitch: 'Switch character', touchHeart: 'Send a heart emote', touchSpecial: 'Nón Lá special',
-    touchGuide: 'Slide anywhere on the left to walk. HOLD 🤝 beside a fallen partner to revive. Use TWIN LANTERN at 35 Love.',
+    touchHands: 'Hold to revive partner', touchSwitch: 'Switch character', touchHeart: 'Send a heart emote', touchSpecial: 'Nón Lá special',
+    touchGuide: 'Slide anywhere on the left to walk. HOLD 💞 beside a fallen partner to revive. Use TWIN LANTERN at 35 Love.',
     spiritMonster: 'Restless spirit', spiritMagic: 'spirit magic', hatMastery: 'Nón Lá Mastery', bossPhase: 'Phase',
     hatSkillName1: 'Golden Rim', hatSkillName2: 'Moon-River Return', hatSkillName3: 'Thánh Gióng Bamboo Gale',
     hatSkillName4: 'Lotus Halo', hatSkillName5: 'Bronze Dragon Seal', hatSkillName6: 'Twin-Star Tempest',
@@ -201,17 +201,17 @@ NLA.I18N = {
     costume_wedding: 'Vietnamese Wedding', costume_modern: 'Modern Couple',
     loveLv0: 'New Sparks', loveLv1: 'Hand in Hand', loveLv2: 'Shared Lantern Light', loveLv3: 'Double Nón Lá Shield',
     loveLv4: 'Love Wind Jump', loveLv5: 'Festival Blessing',
-    loveUp1: '💞 Love Level 1 — Hand-in-Hand Walk! Hold hands to stay safe in the dark.',
+    loveUp1: '💞 Love Level 1 — Hand in Hand! Walk close together and your bond keeps you safe in the dark.',
     loveUp2: '💞 Love Level 2 — Shared Lantern Light! Your glow is bigger together.',
     loveUp3: '💞 Love Level 3 — Double Nón Lá Shield! The shield covers you both, stronger.',
-    loveUp4: '💞 Love Level 4 — Love Wind Jump! Jump while holding hands to soar together.',
+    loveUp4: '💞 Love Level 4 — Love Wind Jump! Stand together, HOLD 💞 (H) and jump to soar as one.',
     loveUp5: '💞 Love Level 5 — Festival Blessing! Nearby lanterns glow for you.',
     tipMove: 'Walk with the movement keys — stay close together!',
     tipJump: 'Jump over the crates.', tipLight: 'Girl: press her power near the lantern to light it ✨',
     tipWind: 'Boy: press his power to blow wind — swing the hanging lantern low, then the girl lights it!',
     tipPush: 'Boy: walk into the crate to push it onto the golden plate.',
     tipLotus: 'Girl: use her 2nd power near sparkling water to grow a lotus platform 🌸',
-    tipHands: 'Stand close & press the hands key under the arch to hold hands 🤝',
+    tipHands: 'Walk under the arch close together — your bond blesses the checkpoint 💗',
     tipMemory: 'Stand together under the big lantern…',
     tipBridge: 'Boy: stand on the wind mark & HOLD power to make a wind bridge. Girl: cross & step on the plate!',
     tipShield: 'Boy: HOLD his 2nd power to shield you both from wind and spirits 🛡',
@@ -220,7 +220,8 @@ NLA.I18N = {
     tipChannel: 'Stand on the two pedestals and BOTH HOLD your powers to wake the Great Lantern!',
     tipTogetherGate: 'Some gates open only when you stand close together 💑',
     promptLight: 'Light ✨', promptWind: 'Wind 🌀', promptLotus: 'Lotus 🌸', promptShield: 'Shield 🛡',
-    promptHands: 'Hold hands 🤝', promptRelease: 'Let go', promptSwap: 'Swap', promptChannel: 'HOLD to channel ✨',
+    promptHands: 'Stay close 💗', promptRelease: 'Let go', promptSwap: 'Swap', promptChannel: 'HOLD to channel ✨',
+    promptRevive: 'HOLD 💞 to revive your partner',
     exitNeed: 'Light the key lanterns first! 🏮',
     exitReady: 'The way is open — walk on together! ➜',
     fellWater: 'Splash! 💦', partnerSaved: 'saved you! +💗',
@@ -229,7 +230,7 @@ NLA.I18N = {
 <h5>🕹 Keyboard — Player 2 (Girl · {GIRL})</h5>
 <p><span class="kbd">◀</span><span class="kbd">▶</span> move · <span class="kbd">▲</span> jump · <span class="kbd">O</span> Light Pulse · <span class="kbd">P</span> Lotus · <span class="kbd">I</span> Nón Lá special</p>
 <h5>💞 Together</h5>
-<p><span class="kbd">H</span> hold hands; HOLD it beside a fallen partner to revive · <span class="kbd">F</span> spend 35 Love on Twin Lantern Resonance · <span class="kbd">Tab</span> swap character (solo) · <span class="kbd">Esc</span> pause</p>
+<p>Walk close together and your bond forms by itself 💗 · <span class="kbd">H</span> HOLD beside a fallen partner to revive them; at Love Lv4, HOLD + jump = Love Wind Jump · <span class="kbd">F</span> spend 35 Love on Twin Lantern Resonance · <span class="kbd">Tab</span> swap character (solo) · <span class="kbd">Esc</span> pause</p>
 <h5>🌀 {BOY} (boy)</h5><p>Wind damages and pushes spirits, moves lanterns, boats and crates. Hold Shield to protect both players and reflect boss magic back at its caster.</p>
 <h5>✨ {GIRL} (girl)</h5><p>Light damages shadow spirits, wakes lanterns and heals broken things. Lotus creates safe platforms while her aura reveals the dark.</p>
 <h5>△ Nón Lá Mastery</h5><p>Purifying spirits grows shared Nón Lá Mastery through six Vietnamese-inspired skills. Use the special only when its gold energy bar is ready.</p>
@@ -303,9 +304,9 @@ NLA.I18N = {
     loveReady: 'SẴN SÀNG · F', loveBurstCast: '💞 Song Đăng Cộng Hưởng! Tình yêu hóa thành sức mạnh chung.',
     loveBurstNeedCharge: 'Cần thêm {LOVE} Tình Yêu để dùng Song Đăng.', loveBurstTooFar: 'Hãy đến gần người ấy trước.',
     loveBurstNeedPartner: 'Hãy cứu người ấy trước khi dùng tuyệt kỹ phối hợp.',
-    partnerDown: 'Người ấy đã ngã — đến gần và GIỮ nút Nắm Tay để cứu!',
+    partnerDown: 'Người ấy đã ngã — đến gần và GIỮ 💞 (H) để cứu!',
     partnerRescued: 'Đã cứu người ấy! Hồi hai Tim · +6 Tình Yêu',
-    rescuePrompt: 'GIỮ H / 🤝 ĐỂ CỨU', reviving: 'ĐANG GỌI ÁNH SÁNG TRỞ LẠI…',
+    rescuePrompt: 'GIỮ H / 💞 ĐỂ CỨU', reviving: 'ĐANG GỌI ÁNH SÁNG TRỞ LẠI…',
     progressSaved: 'Đã lưu hành trình — ghi nhớ vị trí thuyền và câu đố.',
     checkpointRestored: 'Cả hai hồi phục tại điểm hành trình an toàn gần nhất.',
     playSolo: 'Chơi một mình', local2p: '2 người · Một bàn phím', online: 'Chơi Online cùng nhau 💞',
@@ -335,8 +336,8 @@ NLA.I18N = {
     charmsOwned: 'Bùa đã thu thập', rotate: 'Hãy xoay ngang điện thoại nhé 💛',
     touchMoveLeft: 'Đi sang trái', touchMoveRight: 'Đi sang phải', touchJump: 'Nhảy',
     touchWind: 'Gió', touchShield: 'Khiên', touchLight: 'Ánh sáng', touchLotus: 'Hoa sen',
-    touchHands: 'Nắm / Cứu', touchSwitch: 'Đổi vai', touchHeart: 'Gửi biểu tượng tim', touchSpecial: 'Tuyệt kỹ Nón Lá',
-    touchGuide: 'Kéo ở bất kỳ đâu bên trái để đi. GIỮ 🤝 cạnh người đã ngã để cứu. Dùng SONG ĐĂNG khi đủ 35 Tình Yêu.',
+    touchHands: 'Giữ để cứu người ấy', touchSwitch: 'Đổi vai', touchHeart: 'Gửi biểu tượng tim', touchSpecial: 'Tuyệt kỹ Nón Lá',
+    touchGuide: 'Kéo ở bất kỳ đâu bên trái để đi. GIỮ 💞 cạnh người đã ngã để cứu. Dùng SONG ĐĂNG khi đủ 35 Tình Yêu.',
     spiritMonster: 'Linh hồn lạc lối', spiritMagic: 'linh thuật', hatMastery: 'Tinh thông Nón Lá', bossPhase: 'Giai đoạn',
     hatSkillName1: 'Viền Vàng', hatSkillName2: 'Trăng Sông Hồi Quy', hatSkillName3: 'Gió Tre Thánh Gióng',
     hatSkillName4: 'Hào Quang Hoa Sen', hatSkillName5: 'Ấn Rồng Trống Đồng', hatSkillName6: 'Bão Song Tinh',
@@ -422,17 +423,17 @@ NLA.I18N = {
     costume_wedding: 'Áo dài cưới', costume_modern: 'Đôi bạn hiện đại',
     loveLv0: 'Tia lửa đầu tiên', loveLv1: 'Tay trong tay', loveLv2: 'Chung ánh đèn', loveLv3: 'Song nón lá hộ thể',
     loveLv4: 'Cú nhảy gió yêu', loveLv5: 'Phúc lành lễ hội',
-    loveUp1: '💞 Tình yêu cấp 1 — Tay trong tay! Nắm tay để an toàn trong bóng tối.',
+    loveUp1: '💞 Tình yêu cấp 1 — Tay trong tay! Cứ đi cạnh nhau, sợi dây tình cảm sẽ tự gắn kết và che chở hai bạn trong bóng tối.',
     loveUp2: '💞 Tình yêu cấp 2 — Chung ánh đèn! Ánh sáng của hai bạn lớn hơn khi ở gần nhau.',
     loveUp3: '💞 Tình yêu cấp 3 — Song nón lá hộ thể! Khiên che chở cả hai, mạnh mẽ hơn.',
-    loveUp4: '💞 Tình yêu cấp 4 — Cú nhảy gió yêu! Nắm tay và nhảy để bay lên cùng nhau.',
+    loveUp4: '💞 Tình yêu cấp 4 — Cú nhảy gió yêu! Đứng cạnh nhau, GIỮ 💞 (H) rồi nhảy để cùng bay lên.',
     loveUp5: '💞 Tình yêu cấp 5 — Phúc lành lễ hội! Đèn lồng quanh bạn tự tỏa sáng.',
     tipMove: 'Di chuyển bằng phím — nhớ đi cạnh nhau nhé!',
     tipJump: 'Nhảy qua mấy thùng gỗ nào.', tipLight: 'Cô gái: nhấn phép gần đèn lồng để thắp sáng ✨',
     tipWind: 'Chàng trai: nhấn phép để thổi gió — đẩy đèn lồng treo xuống thấp, rồi cô gái thắp nó!',
     tipPush: 'Chàng trai: đi vào thùng gỗ để đẩy nó lên bệ vàng.',
     tipLotus: 'Cô gái: dùng phép thứ 2 gần mặt nước lấp lánh để mọc bệ hoa sen 🌸',
-    tipHands: 'Đứng gần nhau và nhấn phím nắm tay dưới cổng nhé 🤝',
+    tipHands: 'Cùng nhau bước dưới cổng — sợi dây tình cảm sẽ chúc phúc điểm lưu 💗',
     tipMemory: 'Hãy đứng cùng nhau dưới chiếc đèn lồng lớn…',
     tipBridge: 'Chàng trai: đứng lên dấu gió và GIỮ phép để tạo cầu gió. Cô gái: băng qua và đứng lên bệ!',
     tipShield: 'Chàng trai: GIỮ phép thứ 2 để che chắn cả hai khỏi gió và bóng tối 🛡',
@@ -441,7 +442,8 @@ NLA.I18N = {
     tipChannel: 'Đứng lên hai bệ đá và CẢ HAI cùng GIỮ phép để đánh thức Đại Đèn Lồng!',
     tipTogetherGate: 'Có những cánh cổng chỉ mở khi hai bạn đứng thật gần nhau 💑',
     promptLight: 'Ánh sáng ✨', promptWind: 'Gió 🌀', promptLotus: 'Hoa sen 🌸', promptShield: 'Khiên 🛡',
-    promptHands: 'Nắm tay 🤝', promptRelease: 'Buông tay', promptSwap: 'Đổi vai', promptChannel: 'GIỮ để truyền phép ✨',
+    promptHands: 'Ở gần nhau nhé 💗', promptRelease: 'Buông tay', promptSwap: 'Đổi vai', promptChannel: 'GIỮ để truyền phép ✨',
+    promptRevive: 'GIỮ 💞 để cứu người ấy',
     exitNeed: 'Hãy thắp đủ đèn lồng chính trước nhé! 🏮',
     exitReady: 'Đường đã mở — cùng nhau đi tiếp nào! ➜',
     fellWater: 'Ùm! 💦', partnerSaved: 'đã cứu bạn! +💗',
@@ -450,7 +452,7 @@ NLA.I18N = {
 <h5>🕹 Bàn phím — Người chơi 2 ({GIRL})</h5>
 <p><span class="kbd">◀</span><span class="kbd">▶</span> di chuyển · <span class="kbd">▲</span> nhảy · <span class="kbd">O</span> Xung Ánh Sáng · <span class="kbd">P</span> Hoa Sen · <span class="kbd">I</span> tuyệt kỹ Nón Lá</p>
 <h5>💞 Cùng nhau</h5>
-<p><span class="kbd">H</span> nắm tay; GIỮ cạnh người đã ngã để cứu · <span class="kbd">F</span> dùng 35 Tình Yêu thi triển Song Đăng · <span class="kbd">Tab</span> đổi vai (chơi một mình) · <span class="kbd">Esc</span> tạm dừng</p>
+<p>Đi cạnh nhau là sợi dây tình cảm tự gắn kết 💗 · <span class="kbd">H</span> GIỮ cạnh người đã ngã để hồi sinh; ở Tình yêu cấp 4, GIỮ + nhảy = Cú nhảy gió yêu · <span class="kbd">F</span> dùng 35 Tình Yêu thi triển Song Đăng · <span class="kbd">Tab</span> đổi vai (chơi một mình) · <span class="kbd">Esc</span> tạm dừng</p>
 <h5>🌀 {BOY}</h5><p>Gió gây sát thương và đẩy linh hồn, đồng thời đẩy đèn lồng, thuyền và thùng gỗ. Giữ Khiên để bảo vệ cả hai và phản phép trùm.</p>
 <h5>✨ {GIRL}</h5><p>Ánh sáng gây sát thương bóng tối, thắp đèn và chữa lành đồ vỡ. Hoa Sen tạo bệ an toàn và hào quang soi rõ bóng tối.</p>
 <h5>△ Tinh thông Nón Lá</h5><p>Thanh tẩy linh hồn giúp tuyệt kỹ Nón Lá phát triển qua sáu cấp lấy cảm hứng Việt Nam. Chỉ dùng được khi thanh năng lượng vàng đã đầy.</p>

@@ -23,7 +23,8 @@
      buffalo decor              {x}
      sign    floating tip       {x, tip}
      biglantern the finale      {x}
-   Enemies: wisp {x,y}, birdzone {x,range}, bamboo {x}
+   Enemies: birdzone {x,range}, bamboo {x} — ambient wisps were removed;
+   shadow spirits now come only from the chapter combat system (combat.js).
    ===================================================================== */
 (function () {
   const GY = 840;   /* default ground top */
@@ -92,8 +93,6 @@
       { k: 'heart', x: 5720, y: 730, pair: 2 }, { k: 'heart', x: 5790, y: 730, pair: 2 },
     ],
     enemies: [
-      { k: 'wisp', x: 2640, y: 740 }, { k: 'wisp', x: 2780, y: 700 },
-      { k: 'wisp', x: 4560, y: 720 }, { k: 'wisp', x: 5900, y: 700 },
     ],
     collect: [].concat(
       coins(380, 790, 3, 60), coins(590, 700, 2, 60, ['star', 'lantern']),
@@ -138,8 +137,6 @@
       { k: 'stone', x: 6820, id: 's2', key: true },
     ],
     enemies: [
-      { k: 'wisp', x: 1950, y: 700 }, { k: 'wisp', x: 3500, y: 680 },
-      { k: 'wisp', x: 4300, y: 700 }, { k: 'wisp', x: 6050, y: 690 },
     ],
     collect: [].concat(
       coins(900, 780, 3, 90, ['candle', 'petal', 'candle']),
@@ -212,8 +209,6 @@
       { k: 'memory', x: 6380, idx: 7 },
     ],
     enemies: [
-      { k: 'wisp', x: 1550, y: 720 }, { k: 'wisp', x: 2930, y: 700 },
-      { k: 'wisp', x: 4600, y: 680 }, { k: 'wisp', x: 5450, y: 710 },
     ],
     collect: [].concat(
       coins(400, 780, 4, 70, ['leaf', 'lantern', 'leaf', 'star']),
@@ -267,12 +262,9 @@
       { k: 'memory', x: 5960, idx: 5 },
     ],
     enemies: [
-      { k: 'wisp', x: 900, y: 690 }, { k: 'wisp', x: 2000, y: 680 },
       { k: 'birdzone', x: 1900, range: 700 },
       { k: 'birdzone', x: 3400, range: 700 },
-      { k: 'wisp', x: 3300, y: 660 },
       { k: 'birdzone', x: 4800, range: 800 },
-      { k: 'wisp', x: 5000, y: 680 },
     ],
     collect: [].concat(
       coins(650, 750, 4, 90, ['petal', 'candle', 'petal', 'star']),
@@ -328,10 +320,7 @@
       { k: 'heart', x: 5850, y: 700, pair: 2 }, { k: 'heart', x: 5930, y: 700, pair: 2 },
     ],
     enemies: [
-      { k: 'wisp', x: 1150, y: 720 },
-      { k: 'wisp', x: 2700, y: 700 }, { k: 'wisp', x: 2900, y: 730 }, { k: 'wisp', x: 3100, y: 690 },
       { k: 'birdzone', x: 4600, range: 500 },
-      { k: 'wisp', x: 5900, y: 700 },
     ],
     collect: [].concat(
       coins(400, 780, 4, 70, ['envelope', 'lantern', 'envelope', 'star']),
@@ -381,10 +370,7 @@
       { k: 'biglantern', x: 5200, id: 'big' },
     ],
     enemies: [
-      { k: 'wisp', x: 700, y: 720 }, { k: 'wisp', x: 1600, y: 700 },
-      { k: 'wisp', x: 2500, y: 710 }, { k: 'wisp', x: 2700, y: 680 },
       { k: 'birdzone', x: 3500, range: 600 },
-      { k: 'wisp', x: 4200, y: 700 }, { k: 'wisp', x: 4350, y: 730 },
     ],
     collect: [].concat(
       coins(350, 780, 3, 70),

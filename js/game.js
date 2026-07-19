@@ -726,43 +726,38 @@
       }
     }
 
-    /* ================= hands & love jump ================= */
+    /* ================= together bond (automatic) & love jump =================
+       There is no manual hold-hands button anymore: the couple simply bonds
+       when they walk close together. The heart button (H / 💗) is now purely
+       "hold near your fallen partner to revive", plus the deliberate
+       heart-hold + jump combo for the Love Wind Jump. */
     updateHands(ctrls) {
-      const I = NLA.input;
       const [a, b] = this.players;
       const dist = U.dist(a.x, a.y, b.x, b.y);
-      let pressed = false;
-      const anyHands = ctrls.some(c => c && c.hands);
+      /* the heart button state feeds the hold-to-revive system */
+      const anyHeart = ctrls.some(c => c && c.hands);
       for (let i = 0; i < this.players.length; i++) {
         if (ctrls[i] !== null) this.players[i].rescueHeld = !!(ctrls[i] && ctrls[i].hands);
       }
+      NLA.input.consumeHandsTouch();
       if (a.downed || b.downed) {
         this.holdingHands = false;
-        this.prevHands = anyHands;
-        I.consumeHandsTouch();
+        this.prevLoveJump = false;
         return;
       }
-      if (anyHands && !this.prevHands) pressed = true;
-      this.prevHands = anyHands;
-      if (I.consumeHandsTouch()) pressed = true;
-
-      if (pressed) {
-        if (this.holdingHands) {
-          this.holdingHands = false;
-          this.emitEvent('hands', { on: false });
-        } else if (dist < C.HANDS_DIST && a.grounded && b.grounded) {
-          this.holdingHands = true;
+      /* bond forms on its own when the couple stands close */
+      if (!this.holdingHands && dist < C.HANDS_DIST && a.grounded && b.grounded) {
+        this.holdingHands = true;
+        if ((this._bondCd || 0) <= this.t) {
+          this._bondCd = this.t + 4; /* don't chime on every re-link */
           NLA.audio.sfx('chime', 3);
           P().burst((a.x + b.x) / 2, a.y - 60, 6, { kind: 'heart', color: '#ff8fae', speed: 50, life: 1, size: 4, grav: -40 });
-          this.emitEvent('hands', { on: true });
         }
-      }
-      if (this.holdingHands && dist > 150) {
+      } else if (this.holdingHands && dist > 150) {
         this.holdingHands = false;
-        this.emitEvent('hands', { on: false });
       }
-      /* love wind jump */
-      if (this.holdingHands && this.loveLevel >= 4) {
+      /* Love Wind Jump: hold the heart button and jump while together */
+      if (this.holdingHands && this.loveLevel >= 4 && anyHeart) {
         const anyJump = ctrls.some(c => c && c.jump);
         if (anyJump && !this.prevLoveJump && a.grounded && b.grounded) {
           for (const p of this.players) {
@@ -1385,12 +1380,6 @@
             if (Math.abs(pl.x - o.x) < 150) { this.tip = NLA.t(o.tip); return; }
           }
         }
-      }
-      /* contextual */
-      const [a, b] = this.players;
-      if (!this.holdingHands && U.dist(a.x, a.y, b.x, b.y) < C.HANDS_DIST && a.grounded && b.grounded) {
-        this.tip = NLA.t('promptHands') + (NLA.input.isTouchDevice ? ' 🤝' : '  [H]');
-        return;
       }
       const ex = this.level.exit;
       if (ex) {
