@@ -430,15 +430,20 @@
   class Box {
     constructor(o, lv) {
       this.id = o.id; this.x = o.x; this.y = lv.groundY; /* feet/bottom */
-      this.w = 52; this.h = 46; this.vx = 0; this.vy = 0;
+      this.w = o.w || 52; this.h = o.h || 46; this.fixed = !!o.fixed;
+      this.helper = !!o.helper; this.vx = 0; this.vy = 0;
     }
     rect() { return { x: this.x - this.w / 2, y: this.y - this.h, w: this.w, h: this.h }; }
     solid() { const r = this.rect(); return { x: r.x, y: r.y, w: r.w, h: r.h }; }
-    onGust(dir, world) { this.vx += dir * 260; NLA.audio.sfx('push'); }
+    onGust(dir, world) {
+      if (this.fixed) return;
+      this.vx += dir * 260; NLA.audio.sfx('push');
+    }
     update(dt, world) {
       /* pushed by the boy walking into it (uses input intent, since
          collision zeroes his vx) */
       for (const pl of world.players) {
+        if (this.fixed) break;
         if (pl.who !== 'boy') continue;
         const r = this.rect();
         if (pl.y > r.y + 8 && pl.y - C.PLAYER_H < r.y + r.h) {
@@ -448,7 +453,7 @@
         }
       }
       this.vy = Math.min(1200, this.vy + C.GRAVITY * dt);
-      this.x += this.vx * dt;
+      if (!this.fixed) this.x += this.vx * dt;
       this.vx *= Math.pow(0.02, dt);
       this.y += this.vy * dt;
       for (const s of world.staticSolids) {
@@ -469,6 +474,14 @@
       ctx.moveTo(r.x + 3, r.y + 3); ctx.lineTo(r.x + r.w - 3, r.y + r.h - 3);
       ctx.moveTo(r.x + r.w - 3, r.y + 3); ctx.lineTo(r.x + 3, r.y + r.h - 3);
       ctx.stroke();
+      if (this.helper) {
+        ctx.strokeStyle = '#f5c96b'; ctx.lineWidth = 2;
+        D().rr(ctx, r.x + 7, r.y + 7, r.w - 14, r.h - 14, 3); ctx.stroke();
+        ctx.fillStyle = 'rgba(245,201,107,.18)';
+        D().rr(ctx, r.x + 5, r.y + 5, r.w - 10, r.h - 10, 3); ctx.fill();
+        ctx.fillStyle = '#ffe9a3'; ctx.font = 'bold 18px sans-serif'; ctx.textAlign = 'center';
+        ctx.fillText('↑', this.x, r.y + Math.min(28, this.h * .45));
+      }
     }
   }
 
@@ -834,7 +847,7 @@
       ctx.beginPath(); ctx.moveTo(this.x + 34, this.y - 190); ctx.lineTo(this.x + 34, this.y - 168); ctx.stroke();
       const glow = this.seen ? 1 : 0.3 + this.chargeT * 0.5;
       D().glow(ctx, this.seen ? 'warm' : 'purple', this.x + 34, this.y - 132, 80 * glow + 30, glow * 0.8);
-      D().lantern(ctx, this.x + 34, this.y - 168, 46, 56, this.seen ? '#e8a13c' : '#8a5aa8', this.seen || this.chargeT > 0.4, t);
+      D().lantern(ctx, this.x + 34, this.y - 168, 46, 56, this.seen ? '#e8a13c' : '#8a5aa8', this.seen || this.chargeT > 0.4, t, 'memory');
       if (!this.seen) {
         ctx.globalAlpha = 0.6 + Math.sin(t * 2.4) * 0.3;
         D().heart(ctx, this.x + 34, this.y - 220, 8, '#c9a3ff', 1);
@@ -934,6 +947,7 @@
       if (this.taken) return;
       const y = this.y + Math.sin(t * 1.8 + this.phase) * 6;
       D().glow(ctx, 'pink', this.x, y, 34, 0.6);
+      if (D().artSprite(ctx, 'lantern_heart', this.x, y, 54, 68, .95)) return;
       /* heart-shaped lantern */
       D().heart(ctx, this.x, y, 13, '#ff5c8a', 1);
       D().heart(ctx, this.x, y - 1.5, 8, '#ffb8cd', 0.9);
@@ -1311,6 +1325,9 @@
       const girlCh = girlOn && girl.holdingPow1;
       boy.channelLight = boyCh; girl.channelLight = girlCh;
       if (boyCh && girlCh) {
+        if (this.progress <= .001 && world.spawnAbilityFx) {
+          world.spawnAbilityFx('resonance', this.x, this.y - 190, 1, 260, 1.2);
+        }
         this.progress += dt / 4;
         if (Math.random() < dt * 40) {
           const from = Math.random() < 0.5 ? boy : girl;
@@ -1355,6 +1372,9 @@
       ctx.beginPath();
       ctx.ellipse(x, y - 190, 82, 105, 0, 0, 6.283);
       ctx.fill();
+      if (p > .04 || lit) {
+        D().artSprite(ctx, 'lantern_twin', x, y - 190, 176, 224, Math.min(1, .28 + p * .9 + (lit ? .5 : 0)));
+      }
       /* ribs */
       ctx.strokeStyle = 'rgba(40,20,30,0.35)'; ctx.lineWidth = 2;
       for (const f of [0.3, 0.62, 0.92]) {
@@ -1707,6 +1727,11 @@
       D().glow(ctx, 'warm', this.x, y, 20, 0.35);
       ctx.save();
       ctx.translate(this.x, y);
+      const artSize = 28 + Math.sin(t * 3 + this.phase) * 1.5;
+      if (D().artSprite(ctx, 'item_' + this.kind, 0, 0, artSize, artSize, 1, t * .18)) {
+        ctx.restore();
+        return;
+      }
       switch (this.kind) {
         case 'lantern':
           D().lantern(ctx, 0, -8, 14, 16, '#e8674d', true, t);

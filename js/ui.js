@@ -33,7 +33,7 @@
   }
   function hideAllPanels() {
     ['menu', 'pick-panel', 'level-panel', 'online-panel', 'wardrobe-panel', 'help-panel',
-      'story', 'memory', 'complete', 'pause-panel'].forEach(hide);
+      'item-panel', 'story', 'memory', 'complete', 'pause-panel'].forEach(hide);
   }
 
   UI.toast = function (msg, ms) {
@@ -66,6 +66,8 @@
     updateNameLabels();
     UI.updateTouchIcons();
     updateRelayNote();
+    $('btn-items').setAttribute('aria-label', NLA.t('itemCodexTitle'));
+    $('btn-items').title = NLA.t('itemCodexTitle');
     if (!$('level-panel').classList.contains('hidden')) openLevelSelect();
   };
 
@@ -143,6 +145,18 @@
     click('btn-music', toggleMusic);
     click('btn-sfx', toggleSfx);
     click('help-back', () => { hide('help-panel'); show('menu'); });
+    click('btn-items', () => {
+      if (game.state !== 'play' || !$('story').classList.contains('hidden')) return;
+      UI._itemWasPaused = game.paused;
+      game.paused = true;
+      hide('touch-guide');
+      show('item-panel');
+    });
+    click('item-back', () => {
+      hide('item-panel');
+      game.paused = !!UI._itemWasPaused;
+      if (!game.paused) UI.showTouchGuide();
+    });
 
     /* solo char pick */
     click('pick-boy', () => { game.mode = 'solo'; game.activeChar = 'boy'; hide('pick-panel'); openLevelSelect(); });

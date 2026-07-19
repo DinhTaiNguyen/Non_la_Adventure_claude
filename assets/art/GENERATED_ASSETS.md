@@ -10,6 +10,17 @@ These assets were created with Codex's built-in image generation mode, then crop
 - `source-v2/skill-atlas.png` → `effects/hat-skill-1.webp` through `hat-skill-6.webp`
 - `source-v2/boss-atlas.png` → `bosses/boss-1.webp` through `boss-6.webp`
 
+### Premium gameplay expansion (v3)
+
+- `source-v3/character-sheet.png` → `ui/character-sheet-v3.webp`
+- `source-v3/item-atlas.png` → eight lightweight files in `items/`
+- `source-v3/lantern-atlas.png` → eight lightweight files in `lanterns/`
+- `source-v3/ability-atlas.png` → six lightweight files in `abilities/`
+- `source-v3/enemy-skill-atlas.png` → six lightweight files in `enemy-skills/`
+- `source-v3/scenery-atlas.png` → six chapter backdrops in `scenery/`
+
+The complete, exact v3 prompt set is recorded in [`V3_PROMPTS.md`](V3_PROMPTS.md).
+
 ## Prompt set
 
 ### Title couple

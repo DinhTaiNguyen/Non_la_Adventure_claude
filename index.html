@@ -10,7 +10,7 @@
 <title>Nón Lá Love Adventure: Lanterns of Hội An</title>
 <meta name="description" content="A cozy romantic co-op adventure through a magical Hội An lantern festival. Play together, restore the light!">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏮</text></svg>">
-<link rel="stylesheet" href="css/style.css?v=7">
+<link rel="stylesheet" href="css/style.css?v=8">
 </head>
 <body>
 <div id="app">
@@ -47,6 +47,7 @@
 
   <!-- top bar (pause) -->
   <div id="topbar" class="hidden">
+    <button id="btn-items" class="icon-btn" aria-label="Item guide" title="Item guide">✦</button>
     <button id="btn-pause" class="icon-btn" aria-label="pause">⏸</button>
   </div>
 
@@ -165,8 +166,29 @@
   <div id="help-panel" class="overlay hidden">
     <div class="panel-card wide">
       <h3 data-i18n="howto">How to Play</h3>
+      <img class="hero-sheet" src="assets/art/ui/character-sheet-v3.webp" alt="" aria-hidden="true" loading="lazy" decoding="async">
       <div id="help-content" class="help-content"></div>
       <button class="btn btn-ghost" id="help-back" data-i18n="back">Back</button>
+    </div>
+  </div>
+
+  <!-- ===== Item benefit codex ===== -->
+  <div id="item-panel" class="overlay hidden">
+    <div class="panel-card wide item-codex-card">
+      <div class="codex-kicker" data-i18n="itemCodexKicker">FIELD CODEX · PICKUP BENEFITS</div>
+      <h3 data-i18n="itemCodexTitle">Lantern Satchel</h3>
+      <p class="hint" data-i18n="itemCodexHint">Every keepsake grants a different immediate benefit and still counts as a wardrobe charm.</p>
+      <div class="item-grid">
+        <article class="item-card"><img src="assets/art/items/lantern.webp" alt="" loading="lazy"><div><b data-i18n="itemName_lantern">Silk Lantern</b><small data-i18n="itemBenefit_lantern">+2 Love · +1 wardrobe charm</small></div></article>
+        <article class="item-card"><img src="assets/art/items/petal.webp" alt="" loading="lazy"><div><b data-i18n="itemName_petal">Lotus Petal</b><small data-i18n="itemBenefit_petal">Heal the weakest hero · refresh Light if healthy</small></div></article>
+        <article class="item-card"><img src="assets/art/items/leaf.webp" alt="" loading="lazy"><div><b data-i18n="itemName_leaf">Bamboo Leaf</b><small data-i18n="itemBenefit_leaf">Recharge Wind Blade and Shield</small></div></article>
+        <article class="item-card"><img src="assets/art/items/envelope.webp" alt="" loading="lazy"><div><b data-i18n="itemName_envelope">Lucky Envelope</b><small data-i18n="itemBenefit_envelope">+3 Love · +1 wardrobe charm</small></div></article>
+        <article class="item-card"><img src="assets/art/items/banhchung.webp" alt="" loading="lazy"><div><b data-i18n="itemName_banhchung">Bánh Chưng</b><small data-i18n="itemBenefit_banhchung">Restore one Heart to both heroes</small></div></article>
+        <article class="item-card"><img src="assets/art/items/star.webp" alt="" loading="lazy"><div><b data-i18n="itemName_star">Star Lantern</b><small data-i18n="itemBenefit_star">Restore 18 Nón Lá energy to both</small></div></article>
+        <article class="item-card"><img src="assets/art/items/hat.webp" alt="" loading="lazy"><div><b data-i18n="itemName_hat">Nón Lá Token</b><small data-i18n="itemBenefit_hat">Fully charge both Nón Lá energy bars</small></div></article>
+        <article class="item-card"><img src="assets/art/items/candle.webp" alt="" loading="lazy"><div><b data-i18n="itemName_candle">Hoa Đăng</b><small data-i18n="itemBenefit_candle">Two-second spirit ward for both heroes</small></div></article>
+      </div>
+      <button class="btn btn-primary" id="item-back" data-i18n="returnAdventure">Return to adventure</button>
     </div>
   </div>
 
@@ -229,19 +251,19 @@
 </div>
 
 <script src="js/deployment-config.js?v=1" defer></script>
-<script src="js/config.js?v=8" defer></script>
-<script src="assets/art/manifest.js?v=1" defer></script>
-<script src="js/draw.js?v=4" defer></script>
+<script src="js/config.js?v=9" defer></script>
+<script src="assets/art/manifest.js?v=2" defer></script>
+<script src="js/draw.js?v=5" defer></script>
 <script src="js/audio.js?v=3" defer></script>
 <script src="js/input.js?v=6" defer></script>
-<script src="js/levels.js?v=3" defer></script>
+<script src="js/levels.js?v=4" defer></script>
 <script src="js/chars.js?v=2" defer></script>
-<script src="js/bg.js?v=3" defer></script>
-<script src="js/entities.js?v=7" defer></script>
-<script src="js/combat.js?v=3" defer></script>
+<script src="js/bg.js?v=4" defer></script>
+<script src="js/entities.js?v=8" defer></script>
+<script src="js/combat.js?v=4" defer></script>
 <script src="js/net.js?v=6" defer></script>
-<script src="js/game.js?v=8" defer></script>
-<script src="js/ui.js?v=8" defer></script>
+<script src="js/game.js?v=10" defer></script>
+<script src="js/ui.js?v=9" defer></script>
 <script src="js/main.js?v=4" defer></script>
 </body>
 </html>

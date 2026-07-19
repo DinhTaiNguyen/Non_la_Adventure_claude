@@ -14,6 +14,10 @@
     temple: { base: '#3d2e35', top: '#5a444e', deco: '#2c202880' },
     finale: { base: '#2e2640', top: '#453a58', deco: '#38304a80' },
   };
+  const ITEM_COLORS = {
+    lantern: '#ffb45e', petal: '#ff9fce', leaf: '#9be56d', envelope: '#ff6964',
+    banhchung: '#72c878', star: '#ffe276', hat: '#f0d49a', candle: '#ff9c79',
+  };
 
   class Game {
     constructor(canvas) {
@@ -50,6 +54,9 @@
       this.viewW = C.VIEW_W; this.viewH = C.VIEW_H; this.scale = 1;
       this.cutscene = false;
       this.celebrating = false;
+      this.abilityFx = [];
+      this.pickupNotice = null;
+      this.seenItemKinds = new Set();
     }
 
     /* ================= level loading ================= */
@@ -69,6 +76,8 @@
       this.levelCharms = 0;
       this.levelLoveStart = this.love;
       this.levelMemories = 0;
+      this.abilityFx.length = 0;
+      this.pickupNotice = null;
       this.levelStartTime = performance.now();
       this.checkpointX = lv.spawnX;
       this.waveTimer = lv.windWaves ? lv.windWaves.period * 0.7 : 0;
@@ -145,13 +154,14 @@
          canvas fallbacks keep loading non-blocking on slow mobile networks. */
       if (NLA.art) {
         const rank = NLA.hatRank ? NLA.hatRank() : 1;
-        NLA.art.preload(['lantern', 'boss' + (idx + 1), 'skill' + rank]);
+        NLA.art.preload(['lantern', 'boss' + (idx + 1), 'skill' + rank,
+          'scene' + (idx + 1), 'enemySkill' + (idx + 1)]);
       }
 
       this.staticSolids = lv.platforms.map(p => ({ x: p.x, y: p.y, w: p.w, h: p.h, oneWay: !!p.oneWay, type: p.type }));
       this.solids = [];
 
-      NLA.bg.build(lv.theme, lv.id * 777 + 13);
+      NLA.bg.build(lv.theme, lv.id * 777 + 13, idx + 1);
       NLA.audio.setTheme(lv.theme);
       NLA.audio.setIntensity(0.25 + this.loveLevel * 0.08);
       this.cam.x = 0; this.cam.y = lv.H - this.viewH;
@@ -243,6 +253,58 @@
       this.levelCharms++;
       NLA.save.data.charms++;
       NLA.save.store();
+      this.applyCollectibleBenefit(c);
+    }
+    applyCollectibleBenefit(c) {
+      const kind = c.kind || 'lantern';
+      const injured = this.players.slice().sort((a, b) => (a.hp / a.maxHp) - (b.hp / b.maxHp))[0];
+      if (kind === 'lantern') this.addLove(2, c.x, c.y);
+      else if (kind === 'petal') {
+        if (injured.hp < injured.maxHp) injured.hp++;
+        else { this.girl.cd1 = 0; this.girl.cd2 = 0; }
+      } else if (kind === 'leaf') {
+        this.boy.shieldMeter = Math.min(C.SHIELD_MAX, this.boy.shieldMeter + 1.35);
+        this.boy.cd1 = 0;
+      } else if (kind === 'envelope') this.addLove(3, c.x, c.y);
+      else if (kind === 'banhchung') {
+        for (const pl of this.players) pl.hp = Math.min(pl.maxHp, pl.hp + 1);
+      } else if (kind === 'star') {
+        for (const pl of this.players) pl.hatEnergy = Math.min(100, pl.hatEnergy + 18);
+      } else if (kind === 'hat') {
+        for (const pl of this.players) pl.hatEnergy = 100;
+      } else if (kind === 'candle') {
+        for (const pl of this.players) { pl.invuln = Math.max(pl.invuln, 2); pl.dim = 0; }
+      }
+      const color = ITEM_COLORS[kind] || '#ffe9a3';
+      this.pickupNotice = { text: NLA.t('itemGain_' + kind), color, life: 2.1 };
+      if (!this.seenItemKinds.has(kind)) {
+        this.seenItemKinds.add(kind);
+        NLA.ui.toast(NLA.t('itemUse_' + kind), 3600);
+      }
+      P().burst(c.x, c.y, 11, { kind: 'spark', color, glow: 'warm', speed: 95, life: .75, size: 3 });
+    }
+    spawnAbilityFx(kind, x, y, dir, size, life) {
+      this.abilityFx.push({ kind, x, y, dir: dir || 1, size: size || 150,
+        life: life || .7, maxLife: life || .7, age: 0 });
+      if (this.abilityFx.length > 12) this.abilityFx.splice(0, this.abilityFx.length - 12);
+      if (NLA.art) NLA.art.load('ability_' + kind);
+    }
+    updateAbilityFx(dt) {
+      for (const fx of this.abilityFx) { fx.life -= dt; fx.age += dt; }
+      this.abilityFx = this.abilityFx.filter(fx => fx.life > 0);
+      if (this.pickupNotice) {
+        this.pickupNotice.life -= dt;
+        if (this.pickupNotice.life <= 0) this.pickupNotice = null;
+      }
+    }
+    drawAbilityFx(ctx, t) {
+      for (const fx of this.abilityFx) {
+        const pct = U.clamp(fx.life / fx.maxLife, 0, 1);
+        const grow = .72 + (1 - pct) * .42;
+        const rotation = fx.kind === 'wind' ? fx.dir * .12 : (fx.kind === 'shield' ? t * .18 : 0);
+        NLA.draw.artSprite(ctx, 'ability_' + fx.kind, fx.x, fx.y,
+          fx.size * grow, fx.size * grow, Math.sin(Math.min(1, fx.age * 7)) * pct, rotation);
+      }
     }
     discoverCulture(o, fromNet) {
       if (!o || o.seen) return;
@@ -263,6 +325,7 @@
       if (other && other.taken) {
         this.addLove(NLA.LOVE.heartPair, h.x, h.y);
         NLA.audio.sfx('loveUp');
+        this.spawnAbilityFx('resonance', h.x, h.y, 1, 165, .95);
       }
     }
     setCheckpoint(x) { this.checkpointX = x; }
@@ -393,6 +456,7 @@
 
     doPulse(x, y, big, fromNet) {
       const radius = C.LIGHT_RANGE + (big ? 70 : 0);
+      this.spawnAbilityFx('light', x, y, 1, big ? 230 : 175, .62);
       NLA.audio.sfx('sparkle');
       /* ring fx */
       for (let i = 0; i < 18; i++) {
@@ -417,6 +481,7 @@
 
     doGust(x, y, dir, fromNet) {
       NLA.audio.sfx('wind');
+      this.spawnAbilityFx('wind', x + dir * 72, y, dir, 175, .5);
       for (let i = 0; i < 14; i++) {
         P().spawn({
           x: x + dir * 20, y: y - 20 + U.rand(-40, 40),
@@ -459,6 +524,7 @@
       if (spot && !spot.grown) {
         if (fromNet) this._suppress = true;
         spot.grow(this);
+        this.spawnAbilityFx('lotus', spot.x, spot.surface - 35, 1, 160, .8);
         this._suppress = false;
         return true;
       }
@@ -496,7 +562,10 @@
         }
         /* shield hold */
         if (ctrl.pow2 && pl.shieldMeter > 0.1) {
-          if (!pl.shieldOn) NLA.audio.sfx('shieldOn');
+          if (!pl.shieldOn) {
+            NLA.audio.sfx('shieldOn');
+            this.spawnAbilityFx('shield', pl.x, pl.y - 44, 1, this.loveLevel >= 3 ? 190 : 155, .55);
+          }
           pl.shieldOn = true;
           pl.shieldMeter = Math.max(0, pl.shieldMeter - dt);
         } else {
@@ -554,6 +623,7 @@
             p.wings = 1.6;
           }
           NLA.audio.sfx('wind'); NLA.audio.sfx('sparkle');
+          this.spawnAbilityFx('love-jump', (a.x + b.x) / 2, a.y - 78, 1, 225, 1.05);
           P().burst((a.x + b.x) / 2, a.y, 18, { kind: 'spark', color: '#ffd7e8', glow: 'pink', speed: 140, life: 1, size: 3.5 });
           this.emitEvent('loveJump', {});
         }
@@ -697,6 +767,7 @@
       for (const o of this.objects) o.update && o.update(dt, this);
       for (const e of this.enemies) e.update(dt, this);
       if (this.combat) this.combat.update(dt, this);
+      this.updateAbilityFx(dt);
       for (const c of this.collectibles) c.update(dt, this);
 
       /* guest: apply gentle correction toward host snapshot */
@@ -948,6 +1019,7 @@
           case 'hands': this.holdingHands = d.on; break;
           case 'loveJump': {
             for (const p of this.players) { p.wings = 1.6; if (!p.remote && this.holdingHands) { p.vy = -1080; p.grounded = false; } }
+            this.spawnAbilityFx('love-jump', (this.boy.x + this.girl.x) / 2, this.boy.y - 78, 1, 225, 1.05);
             break;
           }
           case 'emote': {
@@ -1120,6 +1192,7 @@
       /* enemies above players */
       for (const e of this.enemies) if (inDrawRange(e)) e.draw(ctx, t);
       if (this.combat) this.combat.draw(ctx, t, this);
+      this.drawAbilityFx(ctx, t);
 
       /* world particles */
       P().draw(ctx, 0, 0, 0);
@@ -1315,7 +1388,9 @@
       g.globalAlpha = 1;
       g.clearRect(0, 0, lc.width, lc.height);
       const endBright = this.state === 'ending' ? Math.min(1, this.endingT / 2) : 0;
-      const darkA = lv.dark ? 0.82 * (1 - endBright) : 0.75;
+      /* The finale should feel storm-dark without hiding its bamboo festival
+         scenery or platform silhouettes on phone screens. */
+      const darkA = lv.dark ? 0.68 * (1 - endBright) : 0.75;
       if (lv.dark) {
         g.fillStyle = `rgba(8,5,20,${darkA})`;
         g.fillRect(0, 0, lc.width, lc.height);
@@ -1457,6 +1532,20 @@
       NLA.draw.rr(ctx, 18, this.viewH - 44, 96, 30, 15); ctx.fill();
       ctx.fillStyle = '#ffd76b';
       ctx.fillText(`✨ ${this.levelCharms}`, 34, this.viewH - 23);
+
+      if (this.pickupNotice) {
+        const n = this.pickupNotice;
+        ctx.save();
+        ctx.globalAlpha = U.clamp(n.life * 1.4, 0, 1);
+        ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'left';
+        const nw = Math.min(300, ctx.measureText(n.text).width + 26);
+        ctx.fillStyle = 'rgba(10,8,28,.82)';
+        NLA.draw.rr(ctx, 18, this.viewH - 82, nw, 27, 7); ctx.fill();
+        ctx.strokeStyle = n.color; ctx.lineWidth = 1;
+        NLA.draw.rr(ctx, 18, this.viewH - 82, nw, 27, 7); ctx.stroke();
+        ctx.fillStyle = n.color; ctx.fillText(n.text, 30, this.viewH - 64);
+        ctx.restore();
+      }
 
       /* optional cultural discovery quest */
       if (this.cultureTotal > 0) {

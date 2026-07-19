@@ -432,6 +432,9 @@
         ctx.moveTo(this.x, this.y + 447); ctx.lineTo(this.x, this.y + 463); ctx.stroke();
         ctx.restore(); return;
       }
+      const painted = NLA.draw.artSprite(ctx, 'enemySkill' + (this.chapter || 1), this.x, this.y,
+        this.r * 5.2, this.r * 5.2, .92, t * .7 + Math.atan2(this.vy, this.vx));
+      if (painted) ctx.globalAlpha = .42;
       NLA.draw.glow(ctx, 'warm', this.x, this.y, this.r * 2.8, .5);
       ctx.translate(this.x, this.y);
       ctx.rotate(Math.atan2(this.vy, this.vx) + t * (this.kind === 'seal' ? 4 : 0));
@@ -590,7 +593,10 @@
 
     cast(shots, world, fromNet) {
       const harmful = this.authoritative(world);
-      for (const spec of shots) this.projectiles.push(new CombatProjectile(spec, harmful));
+      for (const spec of shots) {
+        spec.chapter = spec.chapter || (this.levelIdx + 1);
+        this.projectiles.push(new CombatProjectile(spec, harmful));
+      }
       if (!fromNet) world.emitEvent('combatCast', { shots });
       NLA.audio.sfx('bossCast');
     }
@@ -659,11 +665,27 @@
 
     finalDefeated() { return !!(this.finalBoss && this.finalBoss.dead); }
 
+    objectiveInfo(world) {
+      const chapter = this.levelIdx + 1;
+      const farthest = Math.max(...world.players.map(p => p.x));
+      const format = (key, name) => NLA.t(key)
+        .replace('{NAME}', name || '')
+        .replace('{LIT}', world.keyLit)
+        .replace('{TOTAL}', world.level.required);
+      if (farthest < 820 && world.keyLit === 0) {
+        return { text: format('questStart' + chapter), step: 1, total: 4 };
+      }
+      if (!this.guardian.dead) {
+        if (this.guardian.active) return { text: format('questGuardian' + chapter, this.guardian.displayName()), step: 3, total: 4 };
+        return { text: format('questExplore' + chapter), step: 2, total: 4 };
+      }
+      if (world.keyLit < world.level.required) return { text: format('questExplore' + chapter), step: 2, total: 4 };
+      if (!this.finalBoss.dead) return { text: format('questBoss' + chapter, this.finalBoss.displayName()), step: 4, total: 4 };
+      return { text: this.levelIdx === 5 ? NLA.t('questFinalChannel') : NLA.t('questExit'), step: 4, total: 4 };
+    }
+
     objective(world) {
-      if (!this.guardian.dead) return NLA.t('questChapter' + (this.levelIdx + 1)).replace('{NAME}', this.guardian.displayName());
-      if (!this.finalBoss.dead) return NLA.t('questBoss').replace('{NAME}', this.finalBoss.displayName());
-      if (world.keyLit < world.level.required) return NLA.t('questLanterns');
-      return NLA.t('questExit');
+      return this.objectiveInfo(world).text;
     }
 
     activeBoss() {
@@ -735,11 +757,23 @@
 
       ctx.save();
       ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'center';
-      ctx.fillStyle = 'rgba(18,9,32,.72)';
-      const objective = this.objective(world);
+      const info = this.objectiveInfo(world);
+      const objective = info.text;
       const ow = Math.min(vw - 280, ctx.measureText(objective).width + 28);
       const oy = boss ? 160 : 116;
-      NLA.draw.rr(ctx, vw / 2 - ow / 2, oy, ow, 24, 12); ctx.fill();
+      const ox = vw / 2 - ow / 2;
+      const panelGrad = ctx.createLinearGradient(ox, 0, ox + ow, 0);
+      panelGrad.addColorStop(0, 'rgba(16,29,54,.84)');
+      panelGrad.addColorStop(.5, 'rgba(30,12,48,.88)');
+      panelGrad.addColorStop(1, 'rgba(55,19,49,.84)');
+      ctx.fillStyle = panelGrad;
+      NLA.draw.rr(ctx, ox, oy, ow, 26, 7); ctx.fill();
+      ctx.strokeStyle = 'rgba(117,225,255,.38)'; ctx.lineWidth = 1;
+      NLA.draw.rr(ctx, ox, oy, ow, 26, 7); ctx.stroke();
+      for (let i = 1; i <= info.total; i++) {
+        ctx.fillStyle = i <= info.step ? (i === info.step ? '#ffe08a' : '#83e8ff') : 'rgba(255,255,255,.16)';
+        NLA.draw.rr(ctx, ox + 8 + (i - 1) * 9, oy + 10, 6, 6, 2); ctx.fill();
+      }
       ctx.fillStyle = '#ffe9b3'; ctx.fillText(objective, vw / 2, oy + 16);
 
       const rank = rankNow();

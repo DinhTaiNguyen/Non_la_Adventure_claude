@@ -57,11 +57,51 @@
     ctx.roundRect(x, y, w, h, r);
   };
 
+  /* Draw a black-backed luminous production sprite without exposing its cell.
+     Returns false while the tiny WebP is still decoding so callers can keep a
+     procedural first-frame fallback. */
+  D.artSprite = function (ctx, key, x, y, w, h, alpha, rotation) {
+    const sprite = NLA.art && NLA.art.get(key);
+    if (!sprite) return false;
+    ctx.save();
+    ctx.translate(x, y);
+    if (rotation) ctx.rotate(rotation);
+    ctx.globalCompositeOperation = 'screen';
+    ctx.globalAlpha *= alpha === undefined ? 1 : alpha;
+    ctx.drawImage(sprite, -w / 2, -h / 2, w, h);
+    ctx.restore();
+    return true;
+  };
+
+  function lanternVariant(color, requested) {
+    if (requested) return requested;
+    const c = String(color || '').toLowerCase();
+    if (c.includes('4ea3d8') || c.includes('70d8ff')) return 'moon';
+    if (c.includes('58b86a') || c.includes('9fd36b')) return 'bamboo';
+    if (c.includes('8a5aa8') || c.includes('5e3550')) return 'memory';
+    if (c.includes('d8556a') || c.includes('ffb0') || c.includes('ff9d')) return 'lotus';
+    if (c.includes('c85ac0') || c.includes('b79aff')) return 'twin';
+    if (c.includes('e8d24c') || c.includes('e5b75a')) return 'bronze';
+    return 'hoian';
+  }
+
   /* draw a cute lantern body (used by HUD + world) */
-  D.lantern = function (ctx, x, y, w, h, color, lit, t) {
+  D.lantern = function (ctx, x, y, w, h, color, lit, t, variant) {
+    t = t || 0;
     ctx.save();
     ctx.translate(x, y);
     if (lit) D.glow(ctx, 'warm', 0, h * 0.45, h * (1.5 + Math.sin(t * 3) * 0.08), 0.9);
+    const premiumVariant = NLA.art && NLA.art.get('lantern_' + lanternVariant(color, variant));
+    if (premiumVariant) {
+      const sway = t === undefined ? 0 : Math.sin(t * 2.1) * .025;
+      ctx.rotate(sway);
+      ctx.globalCompositeOperation = 'screen';
+      ctx.globalAlpha = lit ? 1 : .26;
+      const dw = w * 1.82, dh = h * 1.82;
+      ctx.drawImage(premiumVariant, -dw / 2, -h * .28, dw, dh);
+      ctx.restore();
+      return;
+    }
     /* The tiny optimized sprite replaces the procedural body once decoded.
        Keeping the old drawing below as a fallback prevents a blank first frame
        on slow phones and lets the game start before optional art is ready. */

@@ -433,10 +433,11 @@
 
   const BG = {
     current: null,
-    build(theme, seed) {
+    build(theme, seed, chapter) {
       const def = THEMES[theme] || THEMES.menu;
       this.current = {
         theme, def,
+        sceneKey: chapter ? 'scene' + chapter : null,
         layers: buildLayers(theme, seed || 12345),
       };
       return this.current;
@@ -454,6 +455,20 @@
       sky.addColorStop(1, def.skyBot);
       ctx.fillStyle = sky;
       ctx.fillRect(0, 0, vw, vh);
+
+      /* A chapter-specific painterly vista supplies professional atmosphere;
+         lightweight procedural layers remain in front for real parallax. */
+      const scene = cur.sceneKey && NLA.art && NLA.art.get(cur.sceneKey);
+      if (scene) {
+        ctx.save();
+        ctx.globalAlpha = coarsePointer ? .48 : .58;
+        ctx.drawImage(scene, 0, 0, vw, vh);
+        const veil = ctx.createLinearGradient(0, 0, 0, vh);
+        veil.addColorStop(0, 'rgba(9,6,24,.04)');
+        veil.addColorStop(1, 'rgba(9,6,24,.34)');
+        ctx.fillStyle = veil; ctx.fillRect(0, 0, vw, vh);
+        ctx.restore();
+      }
 
       /* stars */
       if (def.stars > 0) {
