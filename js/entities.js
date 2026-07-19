@@ -1180,6 +1180,109 @@
     }
   }
 
+  /* Discoverable cultural keepsakes. These stay lightweight canvas art during
+     play; the larger painterly assets are reserved for chapter stories. */
+  class CultureRelic {
+    constructor(o, lv) {
+      this.id = o.id;
+      this.x = o.x;
+      this.y = o.y || lv.groundY;
+      this.kind = o.kind;
+      this.loreKey = o.loreKey || ('culture_' + o.kind);
+      this.xp = o.xp || 4;
+      this.seen = false;
+      this.phase = Math.random() * 6.283;
+      this.color = o.kind === 'giong' ? '#a9e882' : '#f5cf77';
+    }
+    update(dt, world) {
+      if (this.seen || world.cutscene || (world.net.active && !world.net.isHost)) return;
+      for (const pl of world.players) {
+        if (U.dist(pl.x, pl.y - 28, this.x, this.y - 38) < 68) {
+          world.discoverCulture(this, false);
+          break;
+        }
+      }
+    }
+    draw(ctx, t) {
+      const x = this.x, y = this.y;
+      ctx.save();
+      if (!this.seen) {
+        const pulse = .34 + Math.sin(t * 2.5 + this.phase) * .12;
+        D().glow(ctx, this.kind === 'giong' ? 'green' : 'warm', x, y - 45, 52, pulse);
+      }
+      ctx.globalAlpha = this.seen ? .72 : 1;
+      switch (this.kind) {
+        case 'buffaloRice': {
+          ctx.strokeStyle = '#caa24d'; ctx.lineWidth = 2.2; ctx.lineCap = 'round';
+          for (let i = -4; i <= 4; i++) {
+            ctx.beginPath(); ctx.moveTo(x + i * 2, y); ctx.quadraticCurveTo(x + i * 3, y - 30, x + i * 5, y - 61); ctx.stroke();
+            for (let j = 0; j < 3; j++) {
+              const px = x + i * 5 + (i < 0 ? -1 : 1) * j * 2, py = y - 55 + j * 7;
+              ctx.fillStyle = '#efc45c'; ctx.beginPath(); ctx.ellipse(px, py, 4.2, 2.1, .7, 0, 6.283); ctx.fill();
+            }
+          }
+          ctx.strokeStyle = '#8f6a35'; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(x - 11, y - 20); ctx.lineTo(x + 11, y - 20); ctx.stroke();
+          break;
+        }
+        case 'hammock': {
+          ctx.strokeStyle = '#708d45'; ctx.lineWidth = 7; ctx.lineCap = 'round';
+          ctx.beginPath(); ctx.moveTo(x - 55, y); ctx.lineTo(x - 47, y - 93); ctx.moveTo(x + 55, y); ctx.lineTo(x + 47, y - 93); ctx.stroke();
+          ctx.strokeStyle = '#df6e62'; ctx.lineWidth = 9;
+          ctx.beginPath(); ctx.moveTo(x - 44, y - 80); ctx.quadraticCurveTo(x, y - 22, x + 44, y - 80); ctx.stroke();
+          ctx.strokeStyle = '#f2bb86'; ctx.lineWidth = 1.4;
+          for (let i = -3; i <= 3; i++) {
+            ctx.beginPath(); ctx.moveTo(x - 38 + i * 4, y - 73 + Math.abs(i) * 2); ctx.lineTo(x + 38 + i * 2, y - 73 + Math.abs(i) * 2); ctx.stroke();
+          }
+          break;
+        }
+        case 'sandals': {
+          ctx.translate(x, y - 8); ctx.rotate(-.12);
+          for (const s of [-1, 1]) {
+            ctx.fillStyle = '#e2bb59';
+            ctx.beginPath(); ctx.ellipse(s * 13, -17, 9, 22, s * .12, 0, 6.283); ctx.fill();
+            ctx.strokeStyle = '#9a7330'; ctx.lineWidth = 2.2;
+            ctx.beginPath(); ctx.moveTo(s * 13, -30); ctx.quadraticCurveTo(s * 2, -19, s * 13, -12); ctx.stroke();
+            ctx.fillStyle = '#8c6a2d';
+            for (let j = 0; j < 4; j++) { ctx.beginPath(); ctx.arc(s * 13, -24 + j * 6, 1.5, 0, 6.283); ctx.fill(); }
+          }
+          break;
+        }
+        case 'bauda':
+        case 'chuoi': {
+          const jar = this.kind === 'bauda' ? '#9f5f3d' : '#6e4b55';
+          ctx.fillStyle = '#694431'; ctx.fillRect(x - 28, y - 8, 56, 8);
+          ctx.fillStyle = jar;
+          ctx.beginPath(); ctx.moveTo(x - 18, y - 8); ctx.quadraticCurveTo(x - 30, y - 42, x - 15, y - 64); ctx.lineTo(x + 15, y - 64); ctx.quadraticCurveTo(x + 30, y - 42, x + 18, y - 8); ctx.closePath(); ctx.fill();
+          ctx.fillStyle = '#d9a86c'; ctx.fillRect(x - 13, y - 68, 26, 7);
+          ctx.strokeStyle = '#efc88d'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, y - 41, 13, 0, 6.283); ctx.stroke();
+          if (this.kind === 'chuoi') {
+            ctx.fillStyle = '#9370a2';
+            for (let i = 0; i < 4; i++) { ctx.beginPath(); ctx.ellipse(x - 33 + i * 8, y - 9 - (i % 2) * 3, 6, 3.5, -.3, 0, 6.283); ctx.fill(); }
+          }
+          break;
+        }
+        case 'giong': {
+          ctx.strokeStyle = '#47753c'; ctx.lineWidth = 9; ctx.lineCap = 'round';
+          ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + 5, y - 112); ctx.stroke();
+          ctx.strokeStyle = '#a8d875'; ctx.lineWidth = 2;
+          for (let i = 1; i < 5; i++) { const py = y - i * 22; ctx.beginPath(); ctx.moveTo(x - 5, py); ctx.lineTo(x + 11, py); ctx.stroke(); }
+          for (const s of [-1, 1]) {
+            ctx.fillStyle = '#82b85c';
+            for (let i = 0; i < 4; i++) { ctx.beginPath(); ctx.ellipse(x + s * (13 + i * 4), y - 55 - i * 14, 12, 4, s * -.55, 0, 6.283); ctx.fill(); }
+          }
+          ctx.fillStyle = '#e8b958'; ctx.beginPath(); ctx.arc(x + 3, y - 126, 7, 0, 6.283); ctx.fill();
+          ctx.strokeStyle = '#f9e49a'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x + 3, y - 126, 14 + Math.sin(t * 3) * 2, 0, 6.283); ctx.stroke();
+          break;
+        }
+      }
+      if (!this.seen) {
+        ctx.globalAlpha = .55 + Math.sin(t * 3 + this.phase) * .25;
+        D().sparkle(ctx, x, y - (this.kind === 'giong' ? 150 : 91), 7, this.color, 1, t);
+      }
+      ctx.restore();
+    }
+  }
+
   class Sign {
     constructor(o, lv) { this.x = o.x; this.tip = o.tip; this.y = lv.groundY; }
     update() {}
@@ -1661,7 +1764,7 @@
   NLA.ent = {
     Player, StoneLantern, WireLantern, Candle, RopeGate, Box, Plate, Gate,
     Plank, BrokenBridge, LotusSpot, WindMark, MemoryLantern, Checkpoint,
-    HeartLantern, Boat, Rocks, Statue, Villager, Buffalo, Sign, BigLantern,
+    HeartLantern, Boat, Rocks, Statue, Villager, Buffalo, CultureRelic, Sign, BigLantern,
     Wisp, BirdZone, FallingBamboo, Collectible,
   };
 })();

@@ -483,6 +483,35 @@
         ctx.fillStyle = this.color + '55'; ctx.beginPath(); ctx.ellipse(0, 0, 26 + this.rank * 3, 7 + this.rank, 0, 0, TAU); ctx.fill();
         ctx.restore();
       }
+      /* Rank motifs keep the skill culturally legible without extra textures. */
+      ctx.save();
+      ctx.translate(this.x, this.y);
+      ctx.rotate(t * 2.4 * this.dir);
+      if (this.rank === 3) {
+        ctx.fillStyle = '#b8ec82';
+        for (let i = 0; i < 8; i++) {
+          ctx.save(); ctx.rotate(i * TAU / 8); ctx.translate(45, 0); ctx.rotate(.55);
+          ctx.beginPath(); ctx.ellipse(0, 0, 11, 3.5, 0, 0, TAU); ctx.fill(); ctx.restore();
+        }
+      } else if (this.rank === 4) {
+        ctx.fillStyle = '#ffb5d9aa';
+        for (let i = 0; i < 8; i++) {
+          ctx.save(); ctx.rotate(i * TAU / 8); ctx.translate(48, 0);
+          ctx.beginPath(); ctx.ellipse(0, 0, 12, 6, 0, 0, TAU); ctx.fill(); ctx.restore();
+        }
+      } else if (this.rank === 5) {
+        ctx.strokeStyle = '#ffd879'; ctx.lineWidth = 2.5;
+        ctx.beginPath(); ctx.arc(0, 0, 49, 0, TAU); ctx.stroke();
+        for (let i = 0; i < 12; i++) {
+          ctx.save(); ctx.rotate(i * TAU / 12); ctx.beginPath(); ctx.moveTo(41, -4); ctx.lineTo(55, 0); ctx.lineTo(41, 4); ctx.stroke(); ctx.restore();
+        }
+      } else if (this.rank >= 6) {
+        for (const s of [-1, 1]) {
+          ctx.strokeStyle = s < 0 ? '#a9ecff' : '#ff9fcf'; ctx.lineWidth = 3;
+          ctx.beginPath(); ctx.arc(s * 19, 0, 31, 0, TAU); ctx.stroke();
+        }
+      }
+      ctx.restore();
       ctx.globalAlpha = fade;
       ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'center';
       ctx.fillStyle = '#fff4c9';
@@ -563,6 +592,7 @@
       pl.powerFx = 1.5;
       NLA.audio.sfx('hatSkill');
       P().burst(spec.x, spec.y, 22 + rank * 2, { kind: 'spark', color: HAT_COLORS[rank - 1], glow: 'warm', speed: 150, life: .9, size: 3 });
+      if (rank >= 3) P().burst(spec.x, spec.y, 10, { kind: 'leaf', color: rank === 4 ? '#ffb5d9' : '#9fd36b', speed: 115, life: 1.05, size: 4, grav: 25 });
       if (!fromNet) world.emitEvent('hatSkill', spec);
       return spec;
     }

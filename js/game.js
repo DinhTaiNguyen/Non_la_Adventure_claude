@@ -116,6 +116,7 @@
           case 'statue': inst = new E.Statue(o, lv); break;
           case 'villager': inst = new E.Villager(o, lv); break;
           case 'buffalo': inst = new E.Buffalo(o, lv); break;
+          case 'culture': inst = new E.CultureRelic(o, lv); break;
           case 'sign': inst = new E.Sign(o, lv); break;
           case 'biglantern': inst = new E.BigLantern(o, lv); break;
         }
@@ -125,6 +126,8 @@
           this.byId[inst.id] = inst;
         }
       }
+      this.cultureTotal = this.objects.filter(o => o instanceof E.CultureRelic).length;
+      this.cultureSeen = 0;
       this.enemies = [];
       for (const e of lv.enemies) {
         if (e.k === 'wisp') this.enemies.push(new E.Wisp(e));
@@ -234,6 +237,20 @@
       this.levelCharms++;
       NLA.save.data.charms++;
       NLA.save.store();
+    }
+    discoverCulture(o, fromNet) {
+      if (!o || o.seen) return;
+      o.seen = true;
+      this.cultureSeen++;
+      NLA.audio.sfx('chime', (this.cultureSeen + this.levelIdx) % 5);
+      P().burst(o.x, o.y - 58, 18, {
+        kind: o.kind === 'giong' ? 'leaf' : 'spark',
+        color: o.color || '#f5cf77', glow: 'warm', speed: 105, life: 1.15, size: 4, grav: -30,
+      });
+      this.addLove(1, o.x, o.y - 70);
+      if (this.combat) this.combat.receiveReward('culture_' + o.id, o.xp || 4, 'culture', this);
+      NLA.ui.toast(NLA.t(o.loreKey), 6200);
+      if (!fromNet) this.emitEvent('culture', { id: o.id });
     }
     onHeartTaken(h) {
       const other = this.objects.find(o => o instanceof E.HeartLantern && o.pair === h.pair && o !== h);
@@ -693,6 +710,15 @@
           const boat = this.objects.find(o => o instanceof E.Boat);
           if (boat) boat.x = U.lerp(boat.x, s.boat, 0.12);
         }
+        if (Array.isArray(s.culture)) {
+          for (const id of s.culture.slice(0, 16)) {
+            const relic = this.byId[id];
+            if (relic instanceof E.CultureRelic && !relic.seen) {
+              relic.seen = true;
+              this.cultureSeen++;
+            }
+          }
+        }
         if (this.combat && s.combat) this.combat.applySnapshot(s.combat, this);
       }
 
@@ -874,7 +900,8 @@
         if (o instanceof E.Box) boxes.push([Math.round(o.x), Math.round(o.y)]);
         if (o instanceof E.Boat) boat = Math.round(o.x);
       }
-      this.net.send({ t: 'snap', d: { boxes, boat, combat: this.combat ? this.combat.snapshot() : null } });
+      const culture = this.objects.filter(o => o instanceof E.CultureRelic && o.seen).map(o => o.id);
+      this.net.send({ t: 'snap', d: { boxes, boat, culture, combat: this.combat ? this.combat.snapshot() : null } });
       /* love authoritative from host */
       this.net.send({ t: 'love', v: this.love });
     }
@@ -906,6 +933,7 @@
           case 'dispel': if (o && !o.gone) { o.gone = true; NLA.audio.sfx('dispel'); } break;
           case 'collect': if (o && !o.taken) { o.taken = true; this.onCollect(o); NLA.audio.sfx('chime', 2); } break;
           case 'heartTaken': if (o && !o.taken) { o.taken = true; this.onHeartTaken(o); } break;
+          case 'culture': if (o && !o.seen) this.discoverCulture(o, true); break;
           case 'memory': {
             const m = this.objects.find(ob => ob instanceof E.MemoryLantern && ob.x === d.x);
             if (m && !m.seen) { m.seen = true; this.levelMemories++; this.state = 'memory'; NLA.audio.sfx('memory'); NLA.ui.showMemory(m.idx); }
@@ -1423,6 +1451,14 @@
       NLA.draw.rr(ctx, 18, this.viewH - 44, 96, 30, 15); ctx.fill();
       ctx.fillStyle = '#ffd76b';
       ctx.fillText(`✨ ${this.levelCharms}`, 34, this.viewH - 23);
+
+      /* optional cultural discovery quest */
+      if (this.cultureTotal > 0) {
+        ctx.fillStyle = 'rgba(20,14,36,0.5)';
+        NLA.draw.rr(ctx, 122, this.viewH - 44, 94, 30, 15); ctx.fill();
+        ctx.fillStyle = this.cultureSeen >= this.cultureTotal ? '#aee59a' : '#f5cf77';
+        ctx.fillText(`🌾 ${this.cultureSeen}/${this.cultureTotal}`, 137, this.viewH - 23);
+      }
 
       /* --- tip prompt (bottom-center) --- */
       if (this.tip) {

@@ -273,12 +273,23 @@
     showStory(slides, () => {
       game.paused = false;
       UI.showTouchGuide();
-    });
+    }, storyArtFor(idx));
   };
 
-  function showStory(slides, done) {
+  function storyArtFor(idx) {
+    const stem = idx === 2 ? 'vietnam-village-night' : (idx === 5 ? 'thanh-giong-blessing' : '');
+    if (!stem) return '';
+    const compact = window.innerWidth <= 1000 || NLA.input.isTouchDevice;
+    return new URL(`assets/art/${stem}-${compact ? 960 : 1600}.webp`, document.baseURI).href;
+  }
+
+  function showStory(slides, done, art) {
     storyQueue = slides.slice();
     storyDone = done;
+    const panel = $('story');
+    panel.classList.toggle('has-art', !!art);
+    if (art) panel.style.setProperty('--story-art', `url("${art}")`);
+    else panel.style.removeProperty('--story-art');
     show('story');
     advanceStory(true);
   }

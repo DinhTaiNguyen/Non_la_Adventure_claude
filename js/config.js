@@ -104,10 +104,10 @@ NLA.I18N = {
     touchHands: 'Hold hands', touchSwitch: 'Switch character', touchHeart: 'Send a heart emote', touchSpecial: 'Nón Lá special',
     touchGuide: 'Left: slide to walk. Tap △ Nón Lá when its gold meter is ready. 💗 is only a friendly emote.',
     spiritMonster: 'Restless spirit', spiritMagic: 'spirit magic', hatMastery: 'Nón Lá Mastery', bossPhase: 'Phase',
-    hatSkillName1: 'Golden Rim', hatSkillName2: 'Moon-River Return', hatSkillName3: 'Bamboo Gale Ring',
+    hatSkillName1: 'Golden Rim', hatSkillName2: 'Moon-River Return', hatSkillName3: 'Thánh Gióng Bamboo Gale',
     hatSkillName4: 'Lotus Halo', hatSkillName5: 'Bronze Dragon Seal', hatSkillName6: 'Twin-Star Tempest',
     guardianName1: 'Lantern Alley Guardian', guardianName2: 'Moonwater Guardian', guardianName3: 'Bamboo Mask Guardian',
-    guardianName4: 'Lotus Mist Guardian', guardianName5: 'Bronze Drum Guardian', guardianName6: 'Festival Gate Guardian',
+    guardianName4: 'Lotus Mist Guardian', guardianName5: 'Shadow of Occupation', guardianName6: 'Spectral Yuan–Mongol Vanguard',
     bossName1: 'Ashen Lantern Moth', bossName2: 'Moonwater Serpent', bossName3: 'Ancient Bamboo Shade',
     bossName4: 'Lotus Eclipse Crane', bossName5: 'Corrupted Bronze Sentinel', bossName6: 'The Hollow Monsoon',
     guardianAwakes: '⚔ {NAME} blocks the road — use Wind, Light and reflected magic!',
@@ -118,6 +118,12 @@ NLA.I18N = {
     questGuardian: 'Quest: purify {NAME}', questBoss: 'Quest: defeat {NAME}', questLanterns: 'Quest: light the remaining key lanterns',
     questExit: 'Quest complete: reach the arch together', bossBlocksExit: 'The chapter boss still guards the way!',
     hatNotReady: 'Nón Lá magic is recharging…', playerRevived: 'Lantern courage restored at the checkpoint 💛',
+    culture_buffaloRice: '🌾 Buffalo & rice — patient strength and the harvest have sustained village life for generations. Cultural keepsake found!',
+    culture_hammock: '🧶 The woven hammock is a quiet place for stories, rest and family memories beneath the bamboo.',
+    culture_sandals: '🩴 Dép tổ ong — the familiar honeycomb rubber sandals became a humble symbol of practical everyday life.',
+    culture_bauda: '🏺 A Bàu Đá earthenware jar records Bình Định craft and regional heritage. It is a story object, not a drinkable power-up.',
+    culture_chuoi: '🍌 This chuối hột infusion jar is preserved as village lore and botanical tradition; the heroes collect its story, not its alcohol.',
+    culture_giong: '🎋 The bamboo sings with Thánh Gióng’s legend: courage grows when ordinary things are lifted to protect one’s home. Mastery gained!',
     lvName1: 'Hội An Lantern Street', lvName2: 'Moon River Boat Ride', lvName3: 'Bamboo Bridge Village',
     lvName4: 'Lotus Lake Promise', lvName5: 'Ancient Temple of Lanterns', lvName6: 'The Great Lantern Festival',
     costume_classic: 'Classic Festival Áo Dài', costume_flower: 'Nón Lá Flower', costume_lantern: 'Hội An Lantern',
@@ -158,6 +164,7 @@ NLA.I18N = {
 <h5>✨ {GIRL} (girl)</h5><p>Light damages shadow spirits, wakes lanterns and heals broken things. Lotus creates safe platforms while her aura reveals the dark.</p>
 <h5>△ Nón Lá Mastery</h5><p>Purifying spirits grows shared Nón Lá Mastery through six Vietnamese-inspired skills. Use the special only when its gold energy bar is ready.</p>
 <h5>👑 Chapter quest</h5><p>Light key lanterns, purify the guardian, then defeat the chapter boss. Bosses have multiple phases: dodge marked attacks, reflect magic with Shield, and answer with Wind, Light and Nón Lá skills.</p>
+<h5>🌾 Cultural discoveries</h5><p>Walk near glowing village keepsakes to record their short stories and grow Nón Lá Mastery. The 🌾 counter shows how many remain. Historical enemies are magical memory-shadows of past invasion and occupation, not depictions of people living today.</p>
 <h5>📱 Phones & touch controls</h5>
 <p>Put one thumb anywhere on the left side, slide to walk and lift it to stop. <span class="kbd">↑</span> jumps. The labelled powers change with your character. Tap <span class="kbd">△</span> for Nón Lá magic when its gold meter is full.</p>
 <p><span class="kbd">🤝</span> toggles holding hands when you stand close. <span class="kbd">🔄</span> swaps character in solo play. <span class="kbd">💗</span> sends a friendly heart emote only — it does not add Love.</p>
@@ -171,10 +178,10 @@ NLA.I18N = {
     ],
     lvIntro1: 'Chapter 1 — Lantern Street\nRestore the lanterns, learn your Nón Lá magic, purify the alley guardian, then face the Ashen Lantern Moth.',
     lvIntro2: 'Chapter 2 — Moon River\nSail the Thu Bồn river, light the floating candles and master Moon-River Return before the serpent wakes.',
-    lvIntro3: 'Chapter 3 — Bamboo Village\nRepair the village, protect its people and let the bamboo teach your spinning hat a stronger gale.',
+    lvIntro3: 'Chapter 3 — Bamboo Village\nHelp the buffalo-and-rice village, discover its hammock and dép tổ ong keepsakes, then receive Thánh Gióng’s Bamboo Gale.',
     lvIntro4: 'Chapter 4 — Lotus Lake\nCross the moonlit water, shield each other from shadow birds and challenge the Lotus Eclipse Crane.',
-    lvIntro5: 'Chapter 5 — Ancient Temple\nRead the bronze seals, combine Wind and Light, and free the temple sentinel from corruption.',
-    lvIntro6: 'Final Chapter — The Great Lantern Festival\nEverything you learned leads here. Purify the final guardian and survive the Hollow Monsoon’s three phases.',
+    lvIntro5: 'Chapter 5 — Ancient Temple\nPreserve the Bàu Đá and chuối hột story jars, read the bronze seals, then dispel a cold-wind shadow of historical occupation.',
+    lvIntro6: 'Final Chapter — Thánh Gióng’s Blessing\nA legendary bamboo light strengthens both nón lá. Purify the wind-made echo of the Yuan–Mongol invasion, then survive the Hollow Monsoon’s three phases.',
     memories: [
       'The first time we met, it rained over the old bridge.\nYou shared your nón lá with me,\nand we both got wet anyway. We laughed so hard. ☔',
       'You bought two bowls of cao lầu,\nand gave me all your crispy pork.\nI knew right then. 🍜',
@@ -227,10 +234,10 @@ NLA.I18N = {
     touchHands: 'Nắm tay', touchSwitch: 'Đổi vai', touchHeart: 'Gửi biểu tượng tim', touchSpecial: 'Tuyệt kỹ Nón Lá',
     touchGuide: 'Bên trái: kéo để đi. Chạm △ Nón Lá khi thanh vàng đầy. 💗 chỉ là biểu tượng thân thiện.',
     spiritMonster: 'Linh hồn lạc lối', spiritMagic: 'linh thuật', hatMastery: 'Tinh thông Nón Lá', bossPhase: 'Giai đoạn',
-    hatSkillName1: 'Viền Vàng', hatSkillName2: 'Trăng Sông Hồi Quy', hatSkillName3: 'Vòng Gió Tre',
+    hatSkillName1: 'Viền Vàng', hatSkillName2: 'Trăng Sông Hồi Quy', hatSkillName3: 'Gió Tre Thánh Gióng',
     hatSkillName4: 'Hào Quang Hoa Sen', hatSkillName5: 'Ấn Rồng Trống Đồng', hatSkillName6: 'Bão Song Tinh',
     guardianName1: 'Hộ Vệ Hẻm Đèn', guardianName2: 'Hộ Vệ Thủy Nguyệt', guardianName3: 'Hộ Vệ Mặt Nạ Tre',
-    guardianName4: 'Hộ Vệ Sương Sen', guardianName5: 'Hộ Vệ Trống Đồng', guardianName6: 'Hộ Vệ Cổng Lễ Hội',
+    guardianName4: 'Hộ Vệ Sương Sen', guardianName5: 'Bóng Đô Hộ', guardianName6: 'Ảo Ảnh Tiền Quân Nguyên–Mông',
     bossName1: 'Bướm Đèn Tro Tàn', bossName2: 'Giao Long Thủy Nguyệt', bossName3: 'Bóng Tre Ngàn Năm',
     bossName4: 'Hạc Sen Nguyệt Thực', bossName5: 'Vệ Thần Trống Đồng Sa Ngã', bossName6: 'Bão Rỗng Hắc Phong',
     guardianAwakes: '⚔ {NAME} chặn đường — dùng Gió, Ánh sáng và phản lại phép!',
@@ -241,6 +248,12 @@ NLA.I18N = {
     questGuardian: 'Nhiệm vụ: thanh tẩy {NAME}', questBoss: 'Nhiệm vụ: đánh bại {NAME}', questLanterns: 'Nhiệm vụ: thắp những đèn chính còn lại',
     questExit: 'Hoàn thành: cùng nhau đến cổng', bossBlocksExit: 'Trùm chương vẫn đang canh giữ lối đi!',
     hatNotReady: 'Phép Nón Lá đang hồi phục…', playerRevived: 'Dũng khí đèn lồng hồi phục tại điểm lưu 💛',
+    culture_buffaloRice: '🌾 Trâu và lúa — sức bền hiền hòa cùng mùa gặt đã nuôi sống làng quê qua bao thế hệ. Đã tìm thấy kỷ vật!',
+    culture_hammock: '🧶 Chiếc võng đan là nơi nghỉ ngơi, kể chuyện và giữ ký ức gia đình dưới rặng tre.',
+    culture_sandals: '🩴 Dép tổ ong — đôi dép cao su quen thuộc, mộc mạc và thực tế trong đời sống thường ngày.',
+    culture_bauda: '🏺 Chum Bàu Đá lưu lại câu chuyện nghề truyền thống và di sản Bình Định. Đây là kỷ vật, không phải vật phẩm để uống.',
+    culture_chuoi: '🍌 Chum chuối hột được lưu giữ như chuyện làng và tri thức cây cỏ; hai nhân vật thu thập câu chuyện, không uống rượu.',
+    culture_giong: '🎋 Tre ngân lên truyền thuyết Thánh Gióng: lòng can đảm lớn dậy khi điều bình dị được dùng để bảo vệ quê hương. Tăng tinh thông!',
     lvName1: 'Phố Đèn Lồng Hội An', lvName2: 'Thuyền Trăng Sông Thu Bồn', lvName3: 'Làng Cầu Tre',
     lvName4: 'Lời Hứa Hồ Sen', lvName5: 'Cổ Tự Đèn Lồng', lvName6: 'Đại Lễ Hội Đèn Lồng',
     costume_classic: 'Áo dài lễ hội cổ điển', costume_flower: 'Nón lá cài hoa', costume_lantern: 'Đèn lồng Hội An',
@@ -281,6 +294,7 @@ NLA.I18N = {
 <h5>✨ {GIRL}</h5><p>Ánh sáng gây sát thương bóng tối, thắp đèn và chữa lành đồ vỡ. Hoa Sen tạo bệ an toàn và hào quang soi rõ bóng tối.</p>
 <h5>△ Tinh thông Nón Lá</h5><p>Thanh tẩy linh hồn giúp tuyệt kỹ Nón Lá phát triển qua sáu cấp lấy cảm hứng Việt Nam. Chỉ dùng được khi thanh năng lượng vàng đã đầy.</p>
 <h5>👑 Nhiệm vụ chương</h5><p>Thắp đèn chính, thanh tẩy hộ vệ rồi đánh bại trùm chương. Hãy né vùng cảnh báo, dùng Khiên phản phép, sau đó đáp trả bằng Gió, Ánh sáng và Nón Lá.</p>
+<h5>🌾 Khám phá văn hóa</h5><p>Đi đến gần kỷ vật phát sáng để ghi lại câu chuyện và tăng Tinh thông Nón Lá. Bộ đếm 🌾 cho biết còn bao nhiêu kỷ vật. Kẻ địch lịch sử chỉ là bóng ký ức phép thuật về chiến tranh và thời đô hộ, không đại diện cho con người ngày nay.</p>
 <h5>📱 Điện thoại & cảm ứng</h5>
 <p>Đặt ngón tay ở bất kỳ đâu bên trái, kéo để đi và nhấc tay để dừng. <span class="kbd">↑</span> để nhảy. Các nút phép đổi theo nhân vật. Chạm <span class="kbd">△</span> để dùng Nón Lá khi thanh vàng đầy.</p>
 <p><span class="kbd">🤝</span> bật/tắt nắm tay khi đứng gần nhau. <span class="kbd">🔄</span> đổi nhân vật khi chơi một mình. <span class="kbd">💗</span> chỉ gửi biểu tượng trái tim thân thiện — không tăng Tình Yêu.</p>
@@ -294,10 +308,10 @@ NLA.I18N = {
     ],
     lvIntro1: 'Chương 1 — Phố Đèn Lồng\nThắp lại đèn, học phép Nón Lá, thanh tẩy hộ vệ con hẻm rồi đối đầu Bướm Đèn Tro Tàn.',
     lvIntro2: 'Chương 2 — Sông Trăng\nChèo qua sông Thu Bồn, thắp nến nổi và làm chủ Trăng Sông Hồi Quy trước khi giao long thức giấc.',
-    lvIntro3: 'Chương 3 — Làng Tre\nSửa lại ngôi làng, bảo vệ mọi người và để tre dạy chiếc nón xoay thành vòng gió mạnh hơn.',
+    lvIntro3: 'Chương 3 — Làng Tre\nGiúp làng trâu-lúa, khám phá chiếc võng và dép tổ ong, rồi đón nhận Gió Tre Thánh Gióng.',
     lvIntro4: 'Chương 4 — Hồ Sen\nBăng qua mặt nước trăng, che chắn nhau khỏi chim bóng tối và thách đấu Hạc Sen Nguyệt Thực.',
-    lvIntro5: 'Chương 5 — Cổ Tự\nĐọc những ấn trống đồng, phối hợp Gió với Ánh sáng và giải thoát vệ thần cổ tự.',
-    lvIntro6: 'Chương cuối — Đại Lễ Hội Đèn Lồng\nMọi kỹ năng đều dẫn đến đây. Thanh tẩy hộ vệ cuối và sống sót qua ba giai đoạn của Bão Rỗng Hắc Phong.',
+    lvIntro5: 'Chương 5 — Cổ Tự\nGìn giữ chuyện chum Bàu Đá và chuối hột, đọc ấn trống đồng, rồi xua tan Bóng Đô Hộ do gió lạnh tạo ra.',
+    lvIntro6: 'Chương cuối — Phúc Lành Thánh Gióng\nÁnh tre truyền thuyết cường hóa đôi nón lá. Thanh tẩy ảo ảnh cuộc xâm lược Nguyên–Mông, rồi vượt qua ba giai đoạn Bão Rỗng Hắc Phong.',
     memories: [
       'Lần đầu mình gặp nhau, mưa rơi trên cây cầu cổ.\nAnh che nón lá cho em,\nrồi cả hai vẫn ướt hết. Mình cười mãi thôi. ☔',
       'Anh mua hai tô cao lầu,\nrồi nhường em hết phần da heo giòn.\nEm biết ngay từ lúc đó. 🍜',
