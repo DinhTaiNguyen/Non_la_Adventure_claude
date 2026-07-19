@@ -10,7 +10,7 @@
 <title>Nón Lá Love Adventure: Lanterns of Hội An</title>
 <meta name="description" content="A cozy romantic co-op adventure through a magical Hội An lantern festival. Play together, restore the light!">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏮</text></svg>">
-<link rel="stylesheet" href="css/style.css?v=6">
+<link rel="stylesheet" href="css/style.css?v=7">
 </head>
 <body>
 <div id="app">
@@ -54,7 +54,9 @@
   <div id="menu" class="overlay">
     <div class="menu-card">
       <div class="title-wrap">
-        <div class="title-lanterns"><span>🏮</span><span>🏮</span><span>🏮</span></div>
+        <div class="title-lanterns" aria-hidden="true">
+          <img src="assets/art/sprites/lantern-premium.webp" alt=""><img src="assets/art/sprites/lantern-premium.webp" alt=""><img src="assets/art/sprites/lantern-premium.webp" alt="">
+        </div>
         <h1 id="game-title">Nón Lá Love Adventure</h1>
         <h2 id="game-subtitle">Lanterns of Hội An</h2>
       </div>
@@ -82,12 +84,12 @@
       <h3 data-i18n="pickChar">Choose your character</h3>
       <div class="pick-row">
         <button class="pick-card" id="pick-boy">
-          <canvas class="pick-canvas" id="pick-canvas-boy" width="140" height="170"></canvas>
+          <img class="pick-portrait" src="assets/art/ui/portrait-boy.webp" alt="" aria-hidden="true" loading="lazy" decoding="async">
           <span class="name-boy">Joku</span>
           <small data-i18n="boyDesc">Wind & Shield</small>
         </button>
         <button class="pick-card" id="pick-girl">
-          <canvas class="pick-canvas" id="pick-canvas-girl" width="140" height="170"></canvas>
+          <img class="pick-portrait" src="assets/art/ui/portrait-girl.webp" alt="" aria-hidden="true" loading="lazy" decoding="async">
           <span class="name-girl">Jolie</span>
           <small data-i18n="girlDesc">Light & Lotus</small>
         </button>
@@ -100,8 +102,9 @@
 
   <!-- ===== Level select ===== -->
   <div id="level-panel" class="overlay hidden">
-    <div class="panel-card">
+    <div class="panel-card level-select-card">
       <h3 data-i18n="chooseLevel">Choose a chapter</h3>
+      <p class="hint level-open-hint" data-i18n="allChaptersOpen">Every chapter is open — choose the journey you want tonight.</p>
       <div id="level-list" class="level-list"></div>
       <button class="btn btn-ghost" id="level-back" data-i18n="back">Back</button>
     </div>
@@ -116,11 +119,11 @@
       <div id="online-choose">
         <div class="pick-row">
           <button class="pick-card small" id="online-pick-boy">
-            <canvas class="pick-canvas" id="online-canvas-boy" width="110" height="130"></canvas>
+            <img class="pick-portrait small" src="assets/art/ui/portrait-boy.webp" alt="" aria-hidden="true" loading="lazy" decoding="async">
             <span class="name-boy">Joku</span>
           </button>
           <button class="pick-card small" id="online-pick-girl">
-            <canvas class="pick-canvas" id="online-canvas-girl" width="110" height="130"></canvas>
+            <img class="pick-portrait small" src="assets/art/ui/portrait-girl.webp" alt="" aria-hidden="true" loading="lazy" decoding="async">
             <span class="name-girl">Jolie</span>
           </button>
         </div>
@@ -226,18 +229,19 @@
 </div>
 
 <script src="js/deployment-config.js?v=1" defer></script>
-<script src="js/config.js?v=7" defer></script>
-<script src="js/draw.js?v=3" defer></script>
+<script src="js/config.js?v=8" defer></script>
+<script src="assets/art/manifest.js?v=1" defer></script>
+<script src="js/draw.js?v=4" defer></script>
 <script src="js/audio.js?v=3" defer></script>
 <script src="js/input.js?v=6" defer></script>
 <script src="js/levels.js?v=3" defer></script>
 <script src="js/chars.js?v=2" defer></script>
 <script src="js/bg.js?v=3" defer></script>
 <script src="js/entities.js?v=7" defer></script>
-<script src="js/combat.js?v=2" defer></script>
+<script src="js/combat.js?v=3" defer></script>
 <script src="js/net.js?v=6" defer></script>
-<script src="js/game.js?v=7" defer></script>
-<script src="js/ui.js?v=7" defer></script>
+<script src="js/game.js?v=8" defer></script>
+<script src="js/ui.js?v=8" defer></script>
 <script src="js/main.js?v=4" defer></script>
 </body>
 </html>

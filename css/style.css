@@ -78,11 +78,47 @@ html, body {
 }
 .panel-card.wide { max-width: min(640px, 94vw); }
 
+#menu {
+  isolation: isolate;
+  overflow: hidden;
+  justify-content: flex-end;
+  padding: clamp(16px, 5vw, 72px);
+  background: rgba(8, 4, 22, .28);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+#menu::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  background-image: var(--menu-art);
+  background-size: cover;
+  background-position: center;
+  filter: saturate(1.04) contrast(1.02);
+  animation: menuArtBreathe 12s ease-in-out infinite alternate;
+}
+#menu::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(90deg, rgba(7,3,19,.04) 25%, rgba(7,3,19,.34) 58%, rgba(7,3,19,.75) 100%);
+}
+#menu .menu-card {
+  max-width: min(430px, 92vw);
+  background: linear-gradient(160deg, rgba(39,18,57,.88), rgba(18,8,34,.93));
+  box-shadow: 0 22px 70px rgba(0,0,0,.48), 0 0 45px rgba(245,201,107,.18), inset 0 0 30px rgba(245,201,107,.05);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+@keyframes menuArtBreathe { from { transform: scale(1.015); } to { transform: scale(1.045); } }
+
 .title-wrap { margin-bottom: 14px; }
-.title-lanterns { font-size: 26px; letter-spacing: 14px; margin-bottom: 4px; }
-.title-lanterns span { display: inline-block; animation: sway 3s ease-in-out infinite; }
-.title-lanterns span:nth-child(2) { animation-delay: .4s; }
-.title-lanterns span:nth-child(3) { animation-delay: .8s; }
+.title-lanterns { height: 46px; display: flex; justify-content: center; align-items: flex-start; gap: 13px; margin-bottom: 3px; }
+.title-lanterns img { width: 31px; height: 40px; object-fit: contain; filter: drop-shadow(0 0 10px rgba(255,190,80,.75)); animation: sway 3s ease-in-out infinite; transform-origin: 50% 0; }
+.title-lanterns img:nth-child(2) { width: 37px; height: 47px; animation-delay: .4s; }
+.title-lanterns img:nth-child(3) { animation-delay: .8s; }
 @keyframes sway { 0%,100% { transform: rotate(-6deg); } 50% { transform: rotate(6deg); } }
 
 h1 {
@@ -157,6 +193,19 @@ h4 { color: var(--gold); margin-bottom: 8px; }
 .pick-card span { font-weight: 700; font-size: 17px; color: var(--gold); }
 .pick-card small { font-size: 12px; color: var(--pink); }
 .pick-canvas { border-radius: 12px; }
+.pick-portrait {
+  width: 142px;
+  height: 164px;
+  object-fit: cover;
+  object-position: center top;
+  border-radius: 13px;
+  border: 1px solid rgba(255,225,164,.46);
+  box-shadow: inset 0 0 24px rgba(0,0,0,.15), 0 7px 20px rgba(0,0,0,.28);
+  animation: portraitFloat 3.6s ease-in-out infinite;
+}
+.pick-card:nth-child(2) .pick-portrait { animation-delay: -.9s; }
+.pick-portrait.small { width: 106px; height: 120px; }
+@keyframes portraitFloat { 0%,100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-3px) scale(1.012); } }
 
 /* ===== name editor ===== */
 .name-edit {
@@ -185,29 +234,66 @@ h4 { color: var(--gold); margin-bottom: 8px; }
 .name-edit input:focus { outline: none; border-color: var(--pink); box-shadow: 0 0 10px rgba(255,157,181,.35); }
 
 /* ===== level select ===== */
-.level-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 6px; }
+.level-select-card { max-width: min(880px, 96vw); }
+.level-open-hint { margin-top: -6px; }
+.level-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-bottom: 6px; }
 .level-item {
-  display: flex; align-items: center; gap: 12px;
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  min-height: 118px;
+  display: flex; align-items: flex-end; gap: 10px;
   border: 1.5px solid rgba(245,201,107,.4);
-  background: rgba(245,201,107,.06);
+  background-color: rgba(24,12,40,.8);
+  background-size: cover;
+  background-position: center;
   border-radius: 14px;
-  padding: 10px 14px;
+  padding: 42px 11px 10px;
   color: var(--cream);
   cursor: pointer;
-  font-size: 15px;
+  font-size: 14px;
   text-align: left;
-  transition: transform .12s, box-shadow .2s;
+  box-shadow: inset 0 -64px 48px rgba(6,3,16,.88);
+  transition: transform .16s, box-shadow .22s, border-color .2s;
 }
-.level-item:hover:not(.locked) { transform: translateX(4px); box-shadow: 0 3px 14px rgba(245,201,107,.25); }
-.level-item.locked { opacity: .45; cursor: not-allowed; }
+.level-item::before { content: ""; position: absolute; inset: 0; z-index: -1; background: linear-gradient(180deg, rgba(8,3,18,.02) 18%, rgba(8,3,18,.9) 100%); }
+.level-item:hover { transform: translateY(-3px); border-color: rgba(255,220,140,.9); box-shadow: inset 0 -64px 48px rgba(6,3,16,.88), 0 9px 24px rgba(0,0,0,.34), 0 0 18px rgba(245,201,107,.18); }
 .level-item .lv-num {
-  min-width: 34px; height: 34px; border-radius: 50%;
+  position: absolute; top: 9px; left: 9px;
+  min-width: 30px; height: 30px; border-radius: 50%;
   background: linear-gradient(180deg, #f7b23f, #c8443e);
   display: flex; align-items: center; justify-content: center;
-  font-weight: 800; color: #fff;
+  font-weight: 800; color: #fff; box-shadow: 0 3px 12px rgba(0,0,0,.42);
 }
-.level-item .lv-name { flex: 1; }
-.level-item .lv-state { font-size: 18px; }
+.level-item .lv-copy { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.level-item .lv-name { font-weight: 800; line-height: 1.12; text-shadow: 0 2px 5px #000; }
+.level-item .lv-value { font-size: 10.5px; line-height: 1.2; color: #ffe2a1; text-shadow: 0 2px 5px #000; }
+.level-item .lv-state { position: absolute; top: 9px; right: 10px; font-size: 17px; filter: drop-shadow(0 2px 3px #000); }
+
+@media (max-width: 720px) {
+  .level-list { grid-template-columns: repeat(2, minmax(0,1fr)); }
+}
+
+@media (max-width: 900px) {
+  #menu { justify-content: center; padding: 14px; }
+  #menu::after { background: rgba(7,3,19,.46); }
+  #menu .menu-card { -webkit-backdrop-filter: none; backdrop-filter: none; }
+}
+
+/* Landscape phones and short laptop windows keep all six open chapters in a
+   single, comfortable panel without hiding the Back button below the fold. */
+@media (max-height: 520px) and (min-width: 721px) {
+  .level-select-card { max-height: 96vh; padding: 9px 14px; }
+  .level-select-card h3 { margin-bottom: 3px; font-size: 18px; }
+  .level-open-hint { display: none; }
+  .level-list { gap: 6px; margin-bottom: 2px; }
+  .level-item { min-height: 84px; padding: 31px 8px 7px; }
+  .level-item .lv-num { width: 25px; min-width: 25px; height: 25px; top: 6px; left: 7px; font-size: 12px; }
+  .level-item .lv-state { top: 6px; right: 7px; font-size: 14px; }
+  .level-item .lv-name { font-size: 12px; }
+  .level-item .lv-value { font-size: 9px; }
+  .level-select-card .btn-ghost { margin-top: 3px; padding: 6px 12px; }
+}
 
 /* ===== online ===== */
 .join-row { display: flex; gap: 8px; margin-top: 10px; }
@@ -539,6 +625,7 @@ h4 { color: var(--gold); margin-bottom: 8px; }
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
   }
+  #menu::before, .title-lanterns img, .pick-portrait { animation: none; }
 }
 
 /* ===== rotate hint ===== */
@@ -554,7 +641,23 @@ h4 { color: var(--gold); margin-bottom: 8px; }
 @media (max-height: 460px) {
   .menu-card, .panel-card { padding: 14px 18px; }
   h1 { font-size: 20px; }
-  .title-lanterns { font-size: 18px; }
+  .title-wrap { margin-bottom: 7px; }
+  .title-lanterns { height: 34px; gap: 9px; }
+  .title-lanterns img { width: 24px; height: 31px; }
+  .title-lanterns img:nth-child(2) { width: 28px; height: 35px; }
   .btn { padding: 8px 14px; font-size: 14px; }
   .menu-buttons { gap: 6px; }
+  #menu .menu-foot { display: none; }
+  #pick-panel .panel-card { max-height: 96vh; }
+  #pick-panel h3 { margin-bottom: 4px; font-size: 18px; }
+  #pick-panel .pick-row { margin: 4px 0; gap: 9px; }
+  #pick-panel .pick-card { padding: 6px 10px 5px; }
+  #pick-panel .pick-portrait { width: 112px; height: 118px; }
+  #pick-panel .pick-card span { font-size: 14px; }
+  #pick-panel .pick-card small { font-size: 10px; max-width: 170px; }
+  #pick-panel .name-edit { margin: 2px 0 4px; gap: 6px; }
+  #pick-panel .name-edit .ne-title { margin: 0; }
+  #pick-panel .name-edit input { padding: 4px 7px; }
+  #pick-panel .hint { margin: 3px 0 5px; font-size: 11px; line-height: 1.2; }
+  #pick-panel .btn-ghost { margin-top: 3px; }
 }

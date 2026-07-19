@@ -141,6 +141,12 @@
         return inst;
       });
       this.combat = NLA.combat && NLA.combat.create(idx, lv);
+      /* Only fetch art needed by this chapter and the current skill rank. The
+         canvas fallbacks keep loading non-blocking on slow mobile networks. */
+      if (NLA.art) {
+        const rank = NLA.hatRank ? NLA.hatRank() : 1;
+        NLA.art.preload(['lantern', 'boss' + (idx + 1), 'skill' + rank]);
+      }
 
       this.staticSolids = lv.platforms.map(p => ({ x: p.x, y: p.y, w: p.w, h: p.h, oneWay: !!p.oneWay, type: p.type }));
       this.solids = [];

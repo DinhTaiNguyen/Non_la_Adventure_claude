@@ -8,11 +8,19 @@
 
   UI.init = function (g) {
     game = g;
+    applyMenuArt();
     bindMenus();
     UI.applyLang();
     UI.updateToggles();
     startPreviewLoops();
   };
+
+  function applyMenuArt() {
+    if (!NLA.art) return;
+    const key = window.innerWidth <= 1000 || NLA.input.isTouchDevice ? 'titleSmall' : 'titleLarge';
+    $('menu').style.setProperty('--menu-art', `url("${NLA.art.url(key)}")`);
+    NLA.art.preload(['lantern', key]);
+  }
 
   /* ---------------- helpers ---------------- */
   function show(id) {
@@ -58,6 +66,7 @@
     updateNameLabels();
     UI.updateTouchIcons();
     updateRelayNote();
+    if (!$('level-panel').classList.contains('hidden')) openLevelSelect();
   };
 
   /* ---------------- player names (default Joku & Jolie) ---------------- */
@@ -232,21 +241,21 @@
   function openLevelSelect() {
     const list = $('level-list');
     list.innerHTML = '';
-    const unlocked = NLA.save.data.unlocked;
+    const progress = NLA.save.data.unlocked;
     NLA.LEVELS.forEach((lv, i) => {
       const item = document.createElement('button');
-      item.className = 'level-item' + (i + 1 > unlocked ? ' locked' : '');
+      item.className = 'level-item';
+      item.style.backgroundImage = `url("${NLA.art.url('chapter' + (i + 1))}")`;
       item.innerHTML = `<span class="lv-num">${i + 1}</span>
-        <span class="lv-name">${NLA.t('lvName' + (i + 1))}</span>
-        <span class="lv-state">${i + 1 > unlocked ? '🔒' : (i + 1 < unlocked ? '🏮' : '✨')}</span>`;
-      if (i + 1 <= unlocked) {
-        item.addEventListener('click', () => {
-          NLA.audio.sfx('click');
-          hide('level-panel');
-          if (NLA.net.active) NLA.net.send({ t: 'level', idx: i });
-          UI.startLevelFlow(i, false, true);
-        });
-      }
+        <span class="lv-copy"><span class="lv-name">${NLA.t('lvName' + (i + 1))}</span>
+        <span class="lv-value">${NLA.t('lvValue' + (i + 1))}</span></span>
+        <span class="lv-state">${i + 1 < progress ? '✓' : (i + 1 === progress ? '✨' : '↗')}</span>`;
+      item.addEventListener('click', () => {
+        NLA.audio.sfx('click');
+        hide('level-panel');
+        if (NLA.net.active) NLA.net.send({ t: 'level', idx: i });
+        UI.startLevelFlow(i, false, true);
+      });
       list.appendChild(item);
     });
     show('level-panel');
@@ -268,6 +277,8 @@
     const slides = [];
     if (idx === 0 && (withIntro || fromNet)) slides.push(...NLA.t('intro'));
     slides.push(NLA.t(lv.introKey));
+    const chapterStory = NLA.t('lvStory' + (idx + 1));
+    if (Array.isArray(chapterStory)) slides.push(...chapterStory);
     game.loadLevel(idx);
     game.paused = true;
     showStory(slides, () => {
@@ -277,10 +288,11 @@
   };
 
   function storyArtFor(idx) {
-    const stem = idx === 2 ? 'vietnam-village-night' : (idx === 5 ? 'thanh-giong-blessing' : '');
-    if (!stem) return '';
     const compact = window.innerWidth <= 1000 || NLA.input.isTouchDevice;
-    return new URL(`assets/art/${stem}-${compact ? 960 : 1600}.webp`, document.baseURI).href;
+    if (idx === 0) return NLA.art.url(compact ? 'titleSmall' : 'titleLarge');
+    if (idx === 2) return new URL(`assets/art/vietnam-village-night-${compact ? 960 : 1600}.webp`, document.baseURI).href;
+    if (idx === 5) return new URL(`assets/art/thanh-giong-blessing-${compact ? 960 : 1600}.webp`, document.baseURI).href;
+    return NLA.art.url('chapter' + (idx + 1));
   }
 
   function showStory(slides, done, art) {

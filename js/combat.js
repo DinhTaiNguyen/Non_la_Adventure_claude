@@ -269,7 +269,17 @@
       aura.addColorStop(1, c.dark + '00');
       ctx.fillStyle = aura; ctx.beginPath(); ctx.arc(0, 0, 58, 0, TAU); ctx.fill();
 
-      if (this.kind === 'river') this.drawSerpent(ctx, t);
+      const bossArt = this.role !== 'mob' && NLA.art && NLA.art.get('boss' + (this.system.levelIdx + 1));
+      if (bossArt) {
+        ctx.save();
+        ctx.globalCompositeOperation = 'screen';
+        ctx.globalAlpha *= this.role === 'final' ? .96 : .76;
+        const size = this.role === 'final' ? 116 : 106;
+        const breathe = 1 + Math.sin(t * 2.2 + this.floatT) * .025;
+        ctx.scale(breathe, breathe);
+        ctx.drawImage(bossArt, -size / 2, -size * .56, size, size);
+        ctx.restore();
+      } else if (this.kind === 'river') this.drawSerpent(ctx, t);
       else if (this.kind === 'bamboo') this.drawBambooMask(ctx, t);
       else if (this.kind === 'lotus') this.drawCrane(ctx, t);
       else if (this.kind === 'bronze') this.drawBronze(ctx, t);
@@ -472,6 +482,7 @@
     draw(ctx, t) {
       ctx.save();
       const fade = U.clamp(this.life * 1.8, 0, 1);
+      const effectArt = NLA.art && NLA.art.get('skill' + this.rank);
       ctx.globalAlpha = fade;
       for (let i = 4; i >= 0; i--) {
         const tx = this.x - this.dir * i * 19;
@@ -483,29 +494,41 @@
         ctx.fillStyle = this.color + '55'; ctx.beginPath(); ctx.ellipse(0, 0, 26 + this.rank * 3, 7 + this.rank, 0, 0, TAU); ctx.fill();
         ctx.restore();
       }
-      /* Rank motifs keep the skill culturally legible without extra textures. */
+      if (effectArt) {
+        /* The atlas has a pure-black background, so screen blending produces a
+           luminous edge without a costly per-frame filter or a visible square. */
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.rotate(t * 2.1 * this.dir);
+        ctx.globalCompositeOperation = 'screen';
+        ctx.globalAlpha = fade * .92;
+        const size = 98 + this.rank * 8;
+        ctx.drawImage(effectArt, -size / 2, -size / 2, size, size);
+        ctx.restore();
+      }
+      /* Procedural motifs remain a zero-download fallback for the first cast. */
       ctx.save();
       ctx.translate(this.x, this.y);
       ctx.rotate(t * 2.4 * this.dir);
-      if (this.rank === 3) {
+      if (!effectArt && this.rank === 3) {
         ctx.fillStyle = '#b8ec82';
         for (let i = 0; i < 8; i++) {
           ctx.save(); ctx.rotate(i * TAU / 8); ctx.translate(45, 0); ctx.rotate(.55);
           ctx.beginPath(); ctx.ellipse(0, 0, 11, 3.5, 0, 0, TAU); ctx.fill(); ctx.restore();
         }
-      } else if (this.rank === 4) {
+      } else if (!effectArt && this.rank === 4) {
         ctx.fillStyle = '#ffb5d9aa';
         for (let i = 0; i < 8; i++) {
           ctx.save(); ctx.rotate(i * TAU / 8); ctx.translate(48, 0);
           ctx.beginPath(); ctx.ellipse(0, 0, 12, 6, 0, 0, TAU); ctx.fill(); ctx.restore();
         }
-      } else if (this.rank === 5) {
+      } else if (!effectArt && this.rank === 5) {
         ctx.strokeStyle = '#ffd879'; ctx.lineWidth = 2.5;
         ctx.beginPath(); ctx.arc(0, 0, 49, 0, TAU); ctx.stroke();
         for (let i = 0; i < 12; i++) {
           ctx.save(); ctx.rotate(i * TAU / 12); ctx.beginPath(); ctx.moveTo(41, -4); ctx.lineTo(55, 0); ctx.lineTo(41, 4); ctx.stroke(); ctx.restore();
         }
-      } else if (this.rank >= 6) {
+      } else if (!effectArt && this.rank >= 6) {
         for (const s of [-1, 1]) {
           ctx.strokeStyle = s < 0 ? '#a9ecff' : '#ff9fcf'; ctx.lineWidth = 3;
           ctx.beginPath(); ctx.arc(s * 19, 0, 31, 0, TAU); ctx.stroke();
@@ -584,6 +607,7 @@
 
     useHatSkill(pl, world, data, fromNet) {
       const rank = U.clamp(safeNumber(data && data.rank, rankNow()), 1, 6);
+      if (NLA.art) NLA.art.load('skill' + rank);
       const spec = {
         who: pl.who, x: safeNumber(data && data.x, pl.x), y: safeNumber(data && data.y, pl.y - 46),
         dir: safeNumber(data && data.dir, pl.face) < 0 ? -1 : 1, rank,
@@ -636,7 +660,7 @@
     finalDefeated() { return !!(this.finalBoss && this.finalBoss.dead); }
 
     objective(world) {
-      if (!this.guardian.dead) return NLA.t('questGuardian').replace('{NAME}', this.guardian.displayName());
+      if (!this.guardian.dead) return NLA.t('questChapter' + (this.levelIdx + 1)).replace('{NAME}', this.guardian.displayName());
       if (!this.finalBoss.dead) return NLA.t('questBoss').replace('{NAME}', this.finalBoss.displayName());
       if (world.keyLit < world.level.required) return NLA.t('questLanterns');
       return NLA.t('questExit');

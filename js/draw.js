@@ -62,6 +62,19 @@
     ctx.save();
     ctx.translate(x, y);
     if (lit) D.glow(ctx, 'warm', 0, h * 0.45, h * (1.5 + Math.sin(t * 3) * 0.08), 0.9);
+    /* The tiny optimized sprite replaces the procedural body once decoded.
+       Keeping the old drawing below as a fallback prevents a blank first frame
+       on slow phones and lets the game start before optional art is ready. */
+    const sprite = NLA.art && NLA.art.get('lantern');
+    if (sprite) {
+      const sway = t === undefined ? 0 : Math.sin(t * 2.1) * .025;
+      ctx.rotate(sway);
+      ctx.globalAlpha = lit ? 1 : .4;
+      const dw = w * 1.55, dh = h * 1.55;
+      ctx.drawImage(sprite, -dw / 2, -h * .2, dw, dh);
+      ctx.restore();
+      return;
+    }
     /* cap */
     ctx.fillStyle = '#caa24d';
     D.rr(ctx, -w * 0.28, 0, w * 0.56, h * 0.1, 2); ctx.fill();
